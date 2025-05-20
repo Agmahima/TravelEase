@@ -1,20 +1,4 @@
-// "use client";
-
-// import { useEffect } from "react";
-// import { useRouter } from "next/navigation";
-
-// export default function Home() {
-//   const router = useRouter();
-
-//   useEffect(() => {
-//     // Redirect to /dashboard when the root route is accessed
-//     router.push("/dashboard");
-//   }, [router]);
-
-//   return null; // Nothing will be rendered because of the redirect
-// }
 "use client";
-
 import { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -26,18 +10,21 @@ import TransportationSection from '@/components/TransportationSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import CTASection from '@/components/CTASection';
 
-export default function Home() {
+const Home = () => {
   useEffect(() => {
+    // Set page title
     document.title = 'TravelEase - Your All-in-One Travel Companion';
-
+    
+    // Add Font Awesome script for icons
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js';
     script.integrity = 'sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==';
     script.crossOrigin = 'anonymous';
     script.referrerPolicy = 'no-referrer';
     document.body.appendChild(script);
-
+    
     return () => {
+      // Clean up
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
@@ -59,4 +46,6 @@ export default function Home() {
       <Footer />
     </div>
   );
-}
+};
+
+export default Home;
