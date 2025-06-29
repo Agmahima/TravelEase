@@ -54,7 +54,7 @@ const TransportationSection = () => {
                             variant="outline"
                             className="w-full justify-start text-left font-normal relative pl-10"
                           >
-                            <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <CalendarIcon className="absolute left-3 mr-8 top-3 h-4 w-4 text-gray-400 " />
                             {tripStartDate ? format(tripStartDate, "PPP") : <span className="text-gray-400">Start date</span>}
                           </Button>
                         </PopoverTrigger>
@@ -100,7 +100,7 @@ const TransportationSection = () => {
                     {vehicleTypes.map((vehicle, index) => (
                       <div 
                         key={index} 
-                        className={`border rounded-lg p-3 cursor-pointer hover:border-primary text-center ${selectedVehicleType === vehicle.type ? 'border-primary bg-primary bg-opacity-5' : ''}`}
+                        className={`border rounded-lg p-3 cursor-pointer hover:border-primary text-center ${selectedVehicleType === vehicle.type ? 'border-primary bg-white bg-opacity-5' : ''}`}
                         onClick={() => setSelectedVehicleType(vehicle.type)}
                       >
                         <i className={`fas fa-${vehicle.icon} text-primary text-2xl mb-2`}></i>
@@ -117,7 +117,7 @@ const TransportationSection = () => {
                     {serviceTypes.map((service, index) => (
                       <div 
                         key={index} 
-                        className={`border rounded-lg p-4 cursor-pointer hover:border-primary ${selectedServiceLevel === service.name ? 'border-primary bg-primary bg-opacity-5' : ''}`}
+                        className={`border rounded-lg p-4 cursor-pointer hover:border-primary ${selectedServiceLevel === service.name ? 'border-primary bg-white bg-opacity-5' : ''}`}
                         onClick={() => setSelectedServiceLevel(service.name)}
                       >
                         <div className="flex justify-between items-center mb-2">

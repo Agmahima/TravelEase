@@ -8,7 +8,7 @@ const CTASection = () => {
         <img 
           src="https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
           alt="Travel background" 
-          className="w-full h-full object-cover opacity-20"
+          className="w-full h-full object-cover opacity-100"
         />
       </div>
       
@@ -19,7 +19,7 @@ const CTASection = () => {
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/register">
-              <Button className="bg-white text-secondary font-medium px-8 py-6 rounded-lg hover:bg-opacity-90 transition">
+              <Button className="bg-white text-black font-medium px-8 py-6 rounded-lg hover:bg-opacity-90 transition">
                 Create an Account
               </Button>
             </Link>

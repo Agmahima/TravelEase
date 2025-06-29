@@ -76,13 +76,13 @@ const ItineraryBuilder = ({ itinerary = sampleItinerary }: ItineraryBuilderProps
           
           <div className="md:w-1/2 relative">
             <div className="bg-white rounded-xl shadow-xl p-6 border border-gray-100">
-              <h3 className="text-xl font-bold mb-4 text-secondary">Your {itinerary.days.length}-Day Trip to {itinerary.destination}</h3>
+              <h3 className="text-xl font-bold mb-4 text-black">Your {itinerary.days.length}-Day Trip to {itinerary.destination}</h3>
               
               <div className="overflow-x-auto scrollbar-hide">
                 <div className="flex space-x-4 pb-4">
                   {itinerary.days.map((day, index) => (
                     <div key={index} className="flex-shrink-0 w-20 text-center cursor-pointer" onClick={() => setSelectedDayIndex(day.day)}>
-                      <div className={`${selectedDayIndex === day.day ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-primary hover:text-white'} px-2 py-3 rounded-lg transition`}>
+                      <div className={`${selectedDayIndex === day.day ? 'bg-black text-white' : 'bg-gray-100 hover:bg-primary hover:text-white'} px-2 py-3 rounded-lg transition`}>
                         <div className="font-bold">Day {day.day}</div>
                         <div className="text-xs">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                       </div>

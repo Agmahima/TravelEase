@@ -15,11 +15,11 @@ const ItineraryDay = ({ day, onEditActivity, onDeleteActivity }: ItineraryDayPro
       case 'morning':
         return 'border-blue-400';
       case 'lunch':
-        return 'border-accent';
+        return 'border-yellow-400';
       case 'afternoon':
         return 'border-blue-400';
       case 'evening':
-        return 'border-secondary';
+        return 'border-yellow-400';
       default:
         return 'border-gray-300';
     }
@@ -31,11 +31,11 @@ const ItineraryDay = ({ day, onEditActivity, onDeleteActivity }: ItineraryDayPro
       case 'afternoon':
         return 'text-blue-500';
       case 'lunch':
-        return 'text-accent';
+        return 'text-yellow-500';
       case 'evening':
-        return 'text-secondary';
+        return 'text-yellow-500';
       default:
-        return 'text-gray-500';
+        return 'text-black-500';
     }
   };
   
@@ -76,9 +76,9 @@ const ItineraryDay = ({ day, onEditActivity, onDeleteActivity }: ItineraryDayPro
           </div>
           <div className="mt-2 text-xs">
             {activity.booked ? (
-              <Badge variant="outline" className="bg-primary bg-opacity-10 text-primary">Booked</Badge>
+              <Badge variant="outline" className="bg-white bg-opacity-10 text-black">Booked</Badge>
             ) : (
-              <Badge variant="outline" className="bg-secondary bg-opacity-10 text-secondary">Not booked</Badge>
+              <Badge variant="outline" className="bg-white bg-opacity-10 text-black">Not booked</Badge>
             )}
             <Badge variant="outline" className="bg-gray-100 text-gray-600 ml-2">{activity.cost}</Badge>
           </div>

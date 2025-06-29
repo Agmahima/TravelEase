@@ -10,8 +10,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Destination } from '@/types';
 import { SearchIcon, X, Calendar, Users, Tag } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 const Explore = () => {
+
+    const { user, isLoading: authLoading } = useAuth();
+      const router = useRouter();
+      
+      // Redirect to login if not authenticated
+      useEffect(() => {
+        if (!authLoading && !user) {
+          router.push('/login');
+        }
+      }, [user, authLoading, router]);
 //   const urlParams = new URLSearchParams(window.location.search);
 //   const initialDestination = urlParams.get('destination') || '';
 //   const initialCheckIn = urlParams.get('checkIn') || '';

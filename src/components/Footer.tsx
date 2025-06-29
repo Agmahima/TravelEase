@@ -9,7 +9,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-6">
               <Globe className="text-primary text-2xl" />
-              <span className="text-2xl font-bold text-secondary">TravelEase</span>
+              <span className="text-2xl font-bold text-black">TravelEase</span>
             </div>
             <p className="text-gray-600 mb-6">Your all-in-one travel planning and booking platform powered by AI.</p>
             <div className="flex space-x-4">

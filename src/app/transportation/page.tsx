@@ -260,7 +260,7 @@ const Transportation = () => {
                       {vehicleTypes.map((vehicle, index) => (
                         <div 
                           key={index} 
-                          className={`border rounded-lg p-3 cursor-pointer hover:border-primary text-center ${selectedVehicleType === vehicle.type ? 'border-primary bg-primary bg-opacity-5' : ''}`}
+                          className={`border rounded-lg p-3 cursor-pointer hover:border-primary text-center ${selectedVehicleType === vehicle.type ? 'border-black bg-white bg-opacity-5' : ''}`}
                           onClick={() => setSelectedVehicleType(vehicle.type)}
                         >
                           <i className={`fas fa-${vehicle.icon} text-primary text-2xl mb-2`}></i>
@@ -277,7 +277,7 @@ const Transportation = () => {
                       {serviceTypes.map((service, index) => (
                         <div 
                           key={index} 
-                          className={`border rounded-lg p-4 cursor-pointer hover:border-primary ${selectedServiceLevel === service.name ? 'border-primary bg-primary bg-opacity-5' : ''}`}
+                          className={`border rounded-lg p-4 cursor-pointer hover:border-primary ${selectedServiceLevel === service.name ? 'border-primary bg-white bg-opacity-5' : ''}`}
                           onClick={() => setSelectedServiceLevel(service.name)}
                         >
                           <div className="flex justify-between items-center mb-2">

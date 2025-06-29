@@ -53,7 +53,7 @@ const SearchWidget = ({ onSearch, minimal = false }: SearchWidgetProps) => {
   return (
     <div className="bg-white rounded-lg shadow-xl overflow-hidden p-1">
       <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-secondary">Where would you like to go?</h2>
+        <h2 className="text-lg font-semibold text-black">Where would you like to go?</h2>
       </div>
       
       <div className="grid md:grid-cols-4 gap-2 p-4">

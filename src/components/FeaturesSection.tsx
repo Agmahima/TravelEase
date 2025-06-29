@@ -12,7 +12,7 @@ const FeaturesSection = () => {
         <div className="grid md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <div key={index} className="text-center p-6 rounded-lg hover:shadow-lg transition">
-              <div className="w-16 h-16 mx-auto flex items-center justify-center bg-primary bg-opacity-10 rounded-full mb-4">
+              <div className="w-16 h-16 mx-auto flex items-center justify-center bg-black bg-opacity-50 rounded-full mb-4">
                 <i className={`fas fa-${feature.icon} text-2xl text-primary`}></i>
               </div>
               <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>

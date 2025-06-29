@@ -315,34 +315,90 @@ const router = useRouter();
     return option?.mode;
   };
   
-  const handleBookTransportation = (fromIndex: number, toIndex: number) => {
-    const optionIndex = transportationOptions.findIndex(
-      opt => opt.fromDestination === fromIndex && opt.toDestination === toIndex
-    );
+  // const handleBookTransportation = (fromIndex: number, toIndex: number) => {
+  //   const optionIndex = transportationOptions.findIndex(
+  //     opt => opt.fromDestination === fromIndex && opt.toDestination === toIndex
+  //   );
     
-    if (optionIndex >= 0) {
-      const updatedOptions = [...transportationOptions];
-      updatedOptions[optionIndex] = {
-        ...updatedOptions[optionIndex],
-        booked: true
-      };
-      setTransportationOptions(updatedOptions);
+  //   if (optionIndex >= 0) {
+  //     const updatedOptions = [...transportationOptions];
+  //     updatedOptions[optionIndex] = {
+  //       ...updatedOptions[optionIndex],
+  //       booked: true
+  //     };
+  //     setTransportationOptions(updatedOptions);
       
-      // Update trip data with booked transportation
-      if (tripId) {
-        updateTripMutation.mutate({
-          id: parseInt(tripId),
-          data: { transportationOptions: updatedOptions }
-        });
+  //     // Update trip data with booked transportation
+  //     if (tripId) {
+  //       updateTripMutation.mutate({
+  //         id: parseInt(tripId),
+  //         data: { transportationOptions: updatedOptions }
+  //       });
+  //     }
+      
+  //     toast({
+  //       title: "Transportation Booked!",
+  //       description: `Your transportation from ${destinations[fromIndex].location} to ${destinations[toIndex].location} has been booked.`,
+  //     });
+  //   }
+  // };
+  
+  // Add this function to your TripPlanner component, replacing the existing handleBookTransportation function
+
+const handleBookTransportation = (fromIndex: number, toIndex: number) => {
+  const optionIndex = transportationOptions.findIndex(
+    opt => opt.fromDestination === fromIndex && opt.toDestination === toIndex
+  );
+  
+  if (optionIndex >= 0) {
+    const option = transportationOptions[optionIndex];
+    const fromDestination = destinations[fromIndex];
+    const toDestination = destinations[toIndex];
+    
+    // If it's a flight, navigate to flight booking page
+    if (option.mode === 'flight') {
+      // Calculate the travel date based on the cumulative days
+      let travelDate = new Date(startDate || new Date());
+      for (let i = 0; i < fromIndex; i++) {
+        travelDate = addDays(travelDate, destinations[i].daysToStay);
       }
+      travelDate = addDays(travelDate, fromDestination.daysToStay);
       
-      toast({
-        title: "Transportation Booked!",
-        description: `Your transportation from ${destinations[fromIndex].location} to ${destinations[toIndex].location} has been booked.`,
+      const searchParams = new URLSearchParams({
+        from: fromDestination.location,
+        to: toDestination.location,
+        departureDate: format(travelDate, 'yyyy-MM-dd'),
+        adults: adults.toString(),
+        children: children.toString(),
+        tripType: 'one-way'
+      });
+      
+      router.push(`/flight-booking?${searchParams.toString()}`);
+      return;
+    }
+    
+    // For other transportation modes, mark as booked (existing functionality)
+    const updatedOptions = [...transportationOptions];
+    updatedOptions[optionIndex] = {
+      ...updatedOptions[optionIndex],
+      booked: true
+    };
+    setTransportationOptions(updatedOptions);
+    
+    // Update trip data with booked transportation
+    if (tripId) {
+      updateTripMutation.mutate({
+        id: parseInt(tripId),
+        data: { transportationOptions: updatedOptions }
       });
     }
-  };
-  
+    
+    toast({
+      title: "Transportation Booked!",
+      description: `Your transportation from ${fromDestination.location} to ${toDestination.location} has been booked.`,
+    });
+  }
+};
   const handleNextStep = () => {
     if (currentStep === 1) {
       // Validate dates first

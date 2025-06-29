@@ -39,7 +39,7 @@ const Header = () => {
         <div className="flex items-center space-x-2">
           <Globe className="text-primary text-2xl" />
           <Link href="/">
-            <span className="text-2xl font-bold text-secondary cursor-pointer">TravelEase</span>
+            <span className="text-2xl font-bold text-black cursor-pointer">TravelEase</span>
           </Link>
         </div>
         
