@@ -147,7 +147,7 @@ const FlightBookingPage = () => {
     if (query.length < 2) return [];
     
     try {
-      const response = await apiRequest('GET', `http://localhost:5000/api/flights/city-and-airport-search?keyword=${query}`);
+      const response = await apiRequest('GET', `http://localhost:5000/api/flights/city-and-airport-search/${encodeURIComponent(query)}`);
       const data = await response.json();
       return data.data || [];
     } catch (error) {
@@ -198,8 +198,8 @@ const FlightBookingPage = () => {
       });
     }
   });
-  
-  const handleSearch = () => {
+ 
+  const handleSearch = async () => {
     if (!searchForm.from || !searchForm.to || !searchForm.departureDate) {
       toast({
         title: "Missing information",
@@ -208,8 +208,195 @@ const FlightBookingPage = () => {
       });
       return;
     }
-    searchFlights();
+
+    console.log("Starting dynamic flight search...")
+  
+    try {
+      const [fromRes, toRes] = await Promise.all([
+        apiRequest('GET', `http://localhost:5000/api/flights/city-and-airport-search/${encodeURIComponent(searchForm.from)}`),
+        apiRequest('GET', `http://localhost:5000/api/flights/city-and-airport-search/${encodeURIComponent(searchForm.to)}`),
+      ]);
+  
+      const fromData = await fromRes.json();
+      const toData = await toRes.json();
+
+      console.log('From Data:', fromData);
+      console.log('To Data:', toData);  
+  
+      let originCode = fromData.data?.[0]?.iataCode;
+      console.log(originCode)
+      let destinationCode = toData.data?.[0]?.iataCode;
+      console.log(destinationCode)
+
+      if(!originCode) {
+        console.log('No origin code found, trying coordinates lookup');
+        const fromCoordinates = await getCoordinates(searchForm.from);
+        if( fromCoordinates && fromCoordinates.lat !== 0 && fromCoordinates.lng !== 0) {
+          originCode = await getNearbyAirportCode(fromCoordinates.lat, fromCoordinates.lng);
+          console.log('Found origin code from coordinated:', originCode);
+        }
+      }
+
+      if(!destinationCode) {
+        console.log('No destination code found, trying coordinates lookup');
+        const toCoordinates = await getCoordinates(searchForm.to);
+        if(toCoordinates && toCoordinates.lat !== 0 && toCoordinates.lng !== 0) {
+          destinationCode = await getNearbyAirportCode(toCoordinates.lat, toCoordinates.lng);
+          console.log('Found destination code from coordinated:', destinationCode);
+        }
+      }
+
+      console.log('Final Origin Code:', originCode);
+      console.log('Final Destination Code:', destinationCode);
+  
+      if (!originCode || !destinationCode) {
+        toast({
+          title: "Invalid cities",
+          description: "Could not find airport codes for the entered cities.",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      // Update form with IATA codes temporarily for the query
+      setSearchForm((prev) => ({
+        ...prev,
+        from: originCode,
+        to: destinationCode,
+      }));
+
+      console.log('Search Form:', searchForm);
+      console.log('Origin Code:', originCode);
+      console.log('Destination Code:', destinationCode);
+  
+      // Now trigger flight search
+      searchFlights();
+    } catch (error) {
+      toast({
+        title: "Search failed",
+        description: "An error occurred while searching for flights.",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
   };
+
+  const getCoordinates = async (cityName:string) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'FlightBookingApp/1.0'
+          }
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      
+      if (!data || data.length === 0) {
+        console.log(`No coordinates found for: ${cityName}`);
+        return null;
+      }
+  
+      const coordinates = {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      };
+  
+      console.log(`Coordinates for ${cityName}:`, coordinates);
+      return coordinates;
+  
+    } catch (error) {
+      console.error('Error fetching coordinates:', error);
+      return null;
+    }
+  };
+  const amadeusAccessToken = process.env.NEXT_PUBLIC_AMADEUS_ACCESS_TOKEN || '7UGGS1udRouzXnlxwqQGlI1OIpPC';
+
+  
+  const getNearbyAirportCode = async (lat:number, lon:number) => {
+    try {
+      const response = await fetch(
+        `https://test.api.amadeus.com/v1/reference-data/locations/airports?latitude=${lat}&longitude=${lon}&radius=100&page%5Blimit%5D=5&page%5Boffset%5D=0&sort=relevance`,
+        {
+          headers: {
+            'Authorization': `Bearer ${amadeusAccessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      
+      if (!data?.data || data.data.length === 0) {
+        console.log(`No nearby airports found for coordinates: ${lat}, ${lon}`);
+        return null;
+      }
+  
+      // Filter for airports (not just any location)
+      const airports = data.data.filter((location: { subType: string; iataCode: any; }) => 
+        location.subType === 'AIRPORT' && location.iataCode
+      );
+  
+      if (airports.length === 0) {
+        console.log('No airports found in the nearby locations');
+        return null;
+      }
+  
+      const nearestAirport = airports[0];
+      console.log(`Nearest airport: ${nearestAirport.name} (${nearestAirport.iataCode})`);
+      
+      return nearestAirport.iataCode;
+  
+    } catch (error) {
+      console.error('Error fetching nearby airport:', error);
+      return null;
+    }
+  };
+
+  const getCoordinatesBackup = async (cityName:string) => {
+    try {
+      // Using a different geocoding service as backup
+      const response = await fetch(
+        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(cityName)}&key=YOUR_OPENCAGE_API_KEY&limit=1`
+      );
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      
+      if (!data?.results || data.results.length === 0) {
+        return null;
+      }
+  
+      return {
+        lat: data.results[0].geometry.lat,
+        lng: data.results[0].geometry.lng
+      };
+  
+    } catch (error) {
+      console.error('Error with backup geocoding service:', error);
+      return null;
+    }
+  };
+  
+  // Function to validate if a string is likely an airport code
+  const isAirportCode = (str: string) => {
+    return /^[A-Z]{3}$/.test(str.toUpperCase());
+  };
+  
+
   
   const handleBookFlight = (flight: FlightOffer) => {
     setSelectedFlight(flight);

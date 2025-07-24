@@ -25,6 +25,8 @@ import ItineraryBuilder from '@/components/ItineraryBuilder';
 import TransportationSection from '@/components/TransportationSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import CTASection from '@/components/CTASection';
+import 'leaflet/dist/leaflet.css';
+
 
 export default function Home() {
   useEffect(() => {

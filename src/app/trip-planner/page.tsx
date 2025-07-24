@@ -138,6 +138,7 @@ const router = useRouter();
         title: "Trip updated successfully!",
         description: "Your changes have been saved.",
       });
+      router.push(`/book-trip?tripId=${tripId}`); // Redirect to the same trip planner with updated data
     },
     onError: (error) => {
       toast({
@@ -622,6 +623,16 @@ const handleBookTransportation = (fromIndex: number, toIndex: number) => {
   };
   
   const handleBookTrip = () => {
+    router.push('/book-trip?tripId=' + tripId);
+
+    if (!generatedItinerary) {
+      toast({
+        title: "No itinerary generated",
+        description: "Please generate an itinerary before booking your trip.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (tripId && generatedItinerary) {
       updateTripMutation.mutate({ 
         id: parseInt(tripId), 
@@ -637,7 +648,6 @@ const handleBookTransportation = (fromIndex: number, toIndex: number) => {
       });
       
     //   navigate('/dashboard');
-    router.push('/dashboard');
     }
   };
   
