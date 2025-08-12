@@ -15,7 +15,8 @@ export function ProtectedRoute({
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/login');
+      // router.push('/login');
+      window.location.href = '/login'
     }
   }, [user, isLoading, router]);
 

@@ -37,7 +37,7 @@ export async function generateItinerary(request: AIItineraryRequest): Promise<It
   try {
     // First check if we're authenticated
     try {
-      await apiRequest('GET', 'http://localhost:5000/api/user');
+      await apiRequest('GET', '/api/auth/me');
     } catch (authError) {
       if (authError instanceof Error && authError.message.includes('401')) {
         throw new Error('Please log in to generate an itinerary');
@@ -45,7 +45,7 @@ export async function generateItinerary(request: AIItineraryRequest): Promise<It
     }
     
     // Then make the itinerary request
-    const response = await apiRequest('POST', 'http://localhost:5000/api/generate-itinerary', request);
+    const response = await apiRequest('POST', '/api/generate-itinerary', request);
     return await response.json();
   } catch (error) {
     console.error("Failed to generate itinerary:", error);
