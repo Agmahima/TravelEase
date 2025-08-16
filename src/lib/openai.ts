@@ -7,15 +7,25 @@ export interface Activity {
   title: string;
   description: string;
   location: string;
+  duration: string;
   cost: string;
-  category: "morning" | "lunch" | "afternoon" | "evening";
+  category: "morning" | "lunch" | "afternoon" | "evening" | "other";
   booked: boolean;
 }
 
 export interface ItineraryDay {
   day: number;
   date: string;
+  location?: string;        // ADD THIS LINE
   activities: Activity[];
+  accommodation?: string;   // ADD THIS LINE
+  transportation?: string;  // ADD THIS LINE
+  meals?: {                // ADD THIS ENTIRE MEALS OBJECT
+    breakfast?: string;
+    lunch?: string;
+    dinner?: string;
+  };
+  estimatedCost?: number;  // ADD THIS LINE
 }
 
 export interface Itinerary {

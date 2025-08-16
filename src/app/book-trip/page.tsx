@@ -25,6 +25,8 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
+import Footer from '@/components/Footer';
+import Header from '@/components/Header';
 
 // Mock data structures
 const mockItinerary = {
@@ -601,6 +603,8 @@ const TravelBookingFlow = () => {
   };
 
   return (
+     <div className="flex flex-col min-h-screen">
+        <Header />
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Progress Bar */}
@@ -668,6 +672,8 @@ const TravelBookingFlow = () => {
         </div>
       </div>
     </div>
+     <Footer />
+  </div>
   );
 };
 

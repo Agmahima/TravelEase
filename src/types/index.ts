@@ -62,20 +62,31 @@ export interface Destination {
   }
   
   export interface Activity {
-    time: string;
-    title: string;
-    description: string;
-    location: string;
-    cost: string;
-    category: "morning" | "lunch" | "afternoon" | "evening";
-    booked: boolean;
-  }
+  time: string;
+  title: string;
+  description: string;
+  location: string;
+  duration: string;
+  cost: string;
+  category: "morning" | "lunch" | "afternoon" | "evening" | "other";
+  booked: boolean;  // ADD THIS PROPERTY
+}
+
   
   export interface ItineraryDay {
-    day: number;
-    date: string;
-    activities: Activity[];
-  }
+  day: number;
+  date: string;
+  location?: string;
+  activities: Activity[];
+  accommodation?: string;
+  transportation?: string;
+  meals?: {
+    breakfast?: string;
+    lunch?: string;
+    dinner?: string;
+  };
+  estimatedCost?: number;
+}
   
   export interface Feature {
     icon: string;
