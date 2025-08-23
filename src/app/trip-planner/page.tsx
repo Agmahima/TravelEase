@@ -878,7 +878,7 @@ const handleBookTrip = async () => {
       });
 
       // Navigate to dashboard
-      router.push("/book-trip");
+      router.push(`/book-trip?tripId=${newTripId}`);
     } else {
       // Update existing trip with confirmed status
       console.log("Updating existing trip with booking confirmation");

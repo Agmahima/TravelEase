@@ -135,7 +135,7 @@ const FlightBookingPage = () => {
         max: '50'
       });
       
-      const response = await apiRequest('GET', `http://localhost:5000/api/flights/flight-search?${params}`);
+      const response = await apiRequest('GET', `/api/flights/flight-search?${params}`);
       const data = await response.json();
       return data.data || [];
     },
@@ -147,7 +147,7 @@ const FlightBookingPage = () => {
     if (query.length < 2) return [];
     
     try {
-      const response = await apiRequest('GET', `http://localhost:5000/api/flights/city-and-airport-search/${encodeURIComponent(query)}`);
+      const response = await apiRequest('GET', `/api/flights/city-and-airport-search/${encodeURIComponent(query)}`);
       const data = await response.json();
       return data.data || [];
     } catch (error) {
@@ -159,7 +159,7 @@ const FlightBookingPage = () => {
   // Book flight mutation
   const bookFlightMutation = useMutation({
     mutationFn: async (flightOffer: FlightOffer) => {
-      const response = await apiRequest('POST', 'http://localhost:5000/api/flights/flight-booking', {
+      const response = await apiRequest('POST', '/api/flights/flight-booking', {
         flightOffer,
         travelers: [
           {
@@ -213,8 +213,8 @@ const FlightBookingPage = () => {
   
     try {
       const [fromRes, toRes] = await Promise.all([
-        apiRequest('GET', `http://localhost:5000/api/flights/city-and-airport-search/${encodeURIComponent(searchForm.from)}`),
-        apiRequest('GET', `http://localhost:5000/api/flights/city-and-airport-search/${encodeURIComponent(searchForm.to)}`),
+        apiRequest('GET', `/api/flights/city-and-airport-search/${encodeURIComponent(searchForm.from)}`),
+        apiRequest('GET', `/api/flights/city-and-airport-search/${encodeURIComponent(searchForm.to)}`),
       ]);
   
       const fromData = await fromRes.json();
