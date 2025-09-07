@@ -811,6 +811,24 @@ const handleBookTrip = async () => {
     return;
   }
 
+  if (!startDate || !endDate) {
+    toast({
+      title: "Invalid dates",
+      description: "Please ensure both start and end dates are selected.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    toast({
+      title: "Invalid dates",
+      description: "The selected dates are invalid. Please select valid dates.",
+      variant: "destructive",
+    });
+    return;
+  }
+
   try {
     if (!tripId) {
       // Create new trip with confirmed status and itinerary
