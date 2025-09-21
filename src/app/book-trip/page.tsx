@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import HotelDetailsOverlay from "@/components/HotelDetailsOverlay";
 
 // Types based on your trip planner
 interface Activity {
@@ -209,10 +210,20 @@ const TravelBookingFlow = () => {
   // Real flight data state
   const [realFlights, setRealFlights] = useState<RealFlightOffer[]>([]);
   const [isLoadingFlights, setIsLoadingFlights] = useState(false);
+
   const [realHotels, setRealHotels] = useState<any[]>([]);
   const [isLoadingHotels, setIsLoadingHotels] = useState(false);
+  const [destinationId, setDestinationId] = useState<string | null>(null);
+  const [selectedHotelForDetails, setSelectedHotelForDetails] =
+    useState<any>(null);
+  const [hotelDetails, setHotelDetails] = useState<any>(null);
+  const [isLoadingHotelDetails, setIsLoadingHotelDetails] = useState(false);
 
-   const { data: tripData, isLoading: isTripLoading } = useQuery<TripData>({
+  const [showHotelOverlay, setShowHotelOverlay] = useState<boolean>(false);
+  const [selectedHotelForOverlay, setSelectedHotelForOverlay] =
+    useState<any>(null);
+
+  const { data: tripData, isLoading: isTripLoading } = useQuery<TripData>({
     queryKey: ["trip", tripId],
     queryFn: async () => {
       const response = await makeAuthenticatedApiRequest(
@@ -287,45 +298,54 @@ const TravelBookingFlow = () => {
   }, [bookingStep, selectedBookings.transportation, tripData]);
 
   useEffect(() => {
-  if (bookingStep === 'hotels' && selectedBookings.hotels && realHotels.length === 0) {
-    const loadHotels = async () => {
-      setIsLoadingHotels(true);
-      try {
-        if (!tripData?.destinations || tripData.destinations.length === 0) {
-          throw new Error('No destinations found');
+    if (
+      bookingStep === "hotels" &&
+      selectedBookings.hotels &&
+      realHotels.length === 0
+    ) {
+      const loadHotels = async () => {
+        setIsLoadingHotels(true);
+        try {
+          if (!tripData?.destinations || tripData.destinations.length === 0) {
+            throw new Error("No destinations found");
+          }
+
+          const firstDestination = tripData.destinations[0].location;
+          const cityCode = await getCityCode(firstDestination);
+
+          const checkInDate = tripData.startDate
+            ? new Date(tripData.startDate).toISOString().split("T")[0]
+            : format(new Date(), "yyyy-MM-dd");
+
+          const checkOutDate = tripData.endDate
+            ? new Date(tripData.endDate).toISOString().split("T")[0]
+            : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
+
+          const hotels = await searchRealHotels(
+            cityCode,
+            checkInDate,
+            checkOutDate
+          );
+          setRealHotels(hotels);
+        } catch (error) {
+          console.error("Error loading hotels:", error);
+          toast({
+            title: "Error loading hotels",
+            description: "Unable to load hotel data. Please try again.",
+            variant: "destructive",
+          });
+          // Fallback to mock data on error
+          const firstDestination =
+            tripData?.destinations?.[0]?.location || "City";
+          setRealHotels(generateMockHotels(firstDestination));
+        } finally {
+          setIsLoadingHotels(false);
         }
+      };
 
-        const firstDestination = tripData.destinations[0].location;
-        const cityCode = await getCityCode(firstDestination);
-        
-        const checkInDate = tripData.startDate 
-          ? new Date(tripData.startDate).toISOString().split('T')[0]
-          : format(new Date(), 'yyyy-MM-dd');
-        
-        const checkOutDate = tripData.endDate 
-          ? new Date(tripData.endDate).toISOString().split('T')[0]
-          : format(addDays(new Date(), getTripDuration()), 'yyyy-MM-dd');
-
-        const hotels = await searchRealHotels(cityCode, checkInDate, checkOutDate);
-        setRealHotels(hotels);
-      } catch (error) {
-        console.error('Error loading hotels:', error);
-        toast({
-          title: "Error loading hotels",
-          description: "Unable to load hotel data. Please try again.",
-          variant: "destructive",
-        });
-        // Fallback to mock data on error
-        const firstDestination = tripData?.destinations?.[0]?.location || 'City';
-        setRealHotels(generateMockHotels(firstDestination));
-      } finally {
-        setIsLoadingHotels(false);
-      }
-    };
-
-    loadHotels();
-  }
-}, [bookingStep, selectedBookings.hotels, tripData]);
+      loadHotels();
+    }
+  }, [bookingStep, selectedBookings.hotels, tripData]);
 
   // API request helper
   const makeAuthenticatedApiRequest = async (
@@ -377,7 +397,6 @@ const TravelBookingFlow = () => {
   };
 
   // Fetch trip data
- 
 
   // Helper functions for flight data
   const getCoordinates = async (cityName: string) => {
@@ -566,7 +585,6 @@ const TravelBookingFlow = () => {
       return [];
     }
   };
-  
 
   // Helper functions for flight display
   const formatDuration = (duration: string) => {
@@ -607,10 +625,230 @@ const TravelBookingFlow = () => {
     return airlines[code] || code;
   };
 
-  // Update booking details when trip data is loaded
-  
+  interface DestinationSearchResult {
+    destId: string;
+    name: string;
+    label: string;
+    type: string;
+    country: string;
+    region?: string;
+    latitude?: number;
+    longitude?: number;
+    imageUrl?: string;
+    hotelCount?: number;
+  }
+  const searchDestinationId = async (cityName: string) => {
+    try {
+      console.log("searching destination id for :", cityName);
+      const response = await makeAuthenticatedApiRequest(
+        "GET",
+        `/search-destinations?query=${encodeURIComponent(cityName)}`
+      );
+      console.log("Destination search response :", response);
 
-  
+      if (
+        response &&
+        response.data &&
+        Array.isArray(response.data) &&
+        response.data.length > 0
+      ) {
+        // Get the first city result (filter out hotels, landmarks, etc.)
+        const cityResult =
+          response.data.find(
+            (item: DestinationSearchResult) => item.type === "city"
+          ) || response.data[0];
+        console.log("🆔 Found destination:", cityResult);
+        console.log("🆔 Destination ID:", cityResult.destId);
+        return cityResult.destId;
+      }
+
+      console.log("❌ No destination ID found for:", cityName);
+
+      return null;
+    } catch (error) {
+      console.error("Error searching destination:", error);
+      return null;
+    }
+  };
+
+  const searchRealHotels = async (
+    cityName: string,
+    checkInDate: string,
+    checkOutDate: string
+  ) => {
+    try {
+      // First, get the destination ID for the city
+      const destId = await searchDestinationId(cityName);
+      console.log("searchRealHotels - destination id:", destId);
+      if (!destId) {
+        throw new Error("Could not find destination ID for the city");
+      }
+
+      setDestinationId(destId);
+
+      // Then search for hotels using the destination ID
+      const params = new URLSearchParams({
+        dest_id: destId.toString(),
+        checkin_date: checkInDate,
+        checkout_date: checkOutDate,
+        adults: (tripData?.adults || 2).toString(),
+        room_qty: bookingDetails.rooms.toString(),
+      });
+
+      // Add children if any
+      if (tripData?.children && tripData.children > 0) {
+        params.append("children", tripData.children.toString());
+      }
+
+      const response = await makeAuthenticatedApiRequest(
+        "GET",
+        `/search?${params}`
+      );
+
+      console.log(response);
+      console.log("🏨 Response structure:", {
+        hasData: !!response.data,
+        hasHotels: !!(response.data && response.data.hotels),
+        hotelsLength:
+          response.data && response.data.hotels
+            ? response.data.hotels.length
+            : 0,
+      });
+
+      if (
+        response &&
+        response.data &&
+        response.data.hotels &&
+        Array.isArray(response.data.hotels)
+      ) {
+        console.log("🏨 Found hotels:", response.data.hotels.length);
+        return response.data.hotels;
+      }
+
+      console.log("❌ No hotels found in response");
+      return [];
+    } catch (error) {
+      console.error("Error fetching hotels:", error);
+      throw error;
+    }
+  };
+
+  const getHotelDetails = async (
+    hotelId: string,
+    arrivalDate: string,
+    departureDate: string
+  ) => {
+    try {
+      setIsLoadingHotelDetails(true);
+
+      const params = new URLSearchParams({
+        arrival_date: arrivalDate,
+        departure_date: departureDate,
+        adults: (tripData?.adults || 2).toString(),
+      });
+
+      if (tripData?.children && tripData.children > 0) {
+        params.append("children", tripData.children.toString());
+      }
+
+      const response = await makeAuthenticatedApiRequest(
+        "GET",
+        `/${hotelId}/details?${params}`
+      );
+
+      setHotelDetails(response);
+      return response;
+    } catch (error) {
+      console.error("Error fetching hotel details:", error);
+      toast({
+        title: "Error loading hotel details",
+        description: "Unable to load hotel details. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingHotelDetails(false);
+    }
+  };
+
+  // Replace the existing useEffect for loading hotels with this:
+  useEffect(() => {
+    if (
+      bookingStep === "hotels" &&
+      selectedBookings.hotels &&
+      realHotels.length === 0
+    ) {
+      const loadHotels = async () => {
+        setIsLoadingHotels(true);
+        try {
+          if (!tripData?.destinations || tripData.destinations.length === 0) {
+            throw new Error("No destinations found");
+          }
+
+          const firstDestination = tripData.destinations[0].location;
+
+          const checkInDate = tripData.startDate
+            ? new Date(tripData.startDate).toISOString().split("T")[0]
+            : format(new Date(), "yyyy-MM-dd");
+
+          const checkOutDate = tripData.endDate
+            ? new Date(tripData.endDate).toISOString().split("T")[0]
+            : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
+
+          const hotels = await searchRealHotels(
+            firstDestination,
+            checkInDate,
+            checkOutDate
+          );
+          setRealHotels(hotels);
+        } catch (error) {
+          console.error("Error loading hotels:", error);
+          toast({
+            title: "Error loading hotels",
+            description: "Unable to load hotel data. Please try again.",
+            variant: "destructive",
+          });
+          // Fallback to empty array on error
+          setRealHotels([]);
+        } finally {
+          setIsLoadingHotels(false);
+        }
+      };
+
+      loadHotels();
+    }
+  }, [bookingStep, selectedBookings.hotels, tripData]);
+
+  const getCityCode = async (cityName: string) => {
+    // You might want to create a mapping or use a geocoding service
+    // For now, here's a basic implementation using common codes:
+    const cityCodeMap: { [key: string]: string } = {
+      delhi: "DEL",
+      mumbai: "BOM",
+      bangalore: "BLR",
+      chennai: "MAA",
+      kolkata: "CCU",
+      hyderabad: "HYD",
+      pune: "PNQ",
+      ahmedabad: "AMD",
+      jaipur: "JAI",
+      lucknow: "LKO",
+      "new york": "NYC",
+      "los angeles": "LAX",
+      chicago: "CHI",
+      miami: "MIA",
+      "las vegas": "LAS",
+      "san francisco": "SFO",
+      london: "LON",
+      paris: "PAR",
+      tokyo: "TYO",
+      dubai: "DXB",
+    };
+
+    const normalizedCity = cityName.toLowerCase().trim();
+    return (
+      cityCodeMap[normalizedCity] || cityName.substring(0, 3).toUpperCase()
+    );
+  };
 
   // Generate dynamic data based on trip
   const generateHotels = () => {
@@ -651,9 +889,16 @@ const TravelBookingFlow = () => {
           : selectedItems.flight.price;
       total += price * bookingDetails.travelers;
     }
-    if (selectedItems.hotel) {
-      const nights = tripData?.itinerary?.totalDays || 2;
-      total += selectedItems.hotel.price * nights;
+   if (selectedItems.hotel) {
+      // Use totalPrice that was calculated when hotel was selected
+      const hotelPrice = selectedItems.hotel.totalPrice || 0;
+      console.log('Hotel pricing debug:', {
+        totalPrice: selectedItems.hotel.totalPrice,
+        nights: selectedItems.hotel.nights,
+        hotelPrice,
+        selectedHotel: selectedItems.hotel
+      });
+      total += hotelPrice;
     }
     if (selectedItems.cab) {
       const days = tripData?.itinerary?.totalDays || 2;
@@ -1049,226 +1294,353 @@ const TravelBookingFlow = () => {
     );
   };
 
- 
-
-
-  const searchRealHotels = async (cityCode: string, checkInDate: string, checkOutDate: string) => {
-  try {
-    const params = new URLSearchParams({
-      cityCode: cityCode.toUpperCase(),
-      checkInDate,
-      checkOutDate,
-      adults: (tripData?.adults || 2).toString(),
-      children: (tripData?.children || 0).toString(),
-      rooms: bookingDetails.rooms.toString(),
-      currency: 'USD',
-      sort: 'PRICE'
-    });
-
-    const response = await makeAuthenticatedApiRequest(
-      'GET',
-      `/hotel-search?${params}`
-    );
-
-    return response.data || [];
-  } catch (error) {
-    console.error('Error fetching hotels:', error);
-    throw error;
-  }
-};
-
-const getCityCode = async (cityName: string) => {
-  // You might want to create a mapping or use a geocoding service
-  // For now, here's a basic implementation using common codes:
-  const cityCodeMap: { [key: string]: string } = {
-    'delhi': 'DEL',
-    'mumbai': 'BOM',
-    'bangalore': 'BLR',
-    'chennai': 'MAA',
-    'kolkata': 'CCU',
-    'hyderabad': 'HYD',
-    'pune': 'PNQ',
-    'ahmedabad': 'AMD',
-    'jaipur': 'JAI',
-    'lucknow': 'LKO',
-    'new york': 'NYC',
-    'los angeles': 'LAX',
-    'chicago': 'CHI',
-    'miami': 'MIA',
-    'las vegas': 'LAS',
-    'san francisco': 'SFO',
-    'london': 'LON',
-    'paris': 'PAR',
-    'tokyo': 'TYO',
-    'dubai': 'DXB'
-  };
-
-  const normalizedCity = cityName.toLowerCase().trim();
-  return cityCodeMap[normalizedCity] || cityName.substring(0, 3).toUpperCase();
-};
-
-
+  // Replace the existing HotelsStep component with this updated version:
   const HotelsStep = () => {
-  const nights = getTripDuration() - 1;
-  
-  if (isLoadingHotels) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Loading available hotels...</p>
+    const nights = getTripDuration() - 1;
+
+    const handleHotelSelect = async (hotel: any) => {
+      // If this hotel is already selected, just set it
+      if (selectedItems.hotel?.hotelId === hotel.hotelId) {
+        return;
+      }
+
+      // Get detailed information for the selected hotel
+      const checkInDate = tripData?.startDate
+        ? new Date(tripData.startDate).toISOString().split("T")[0]
+        : format(new Date(), "yyyy-MM-dd");
+
+      const checkOutDate = tripData?.endDate
+        ? new Date(tripData.endDate).toISOString().split("T")[0]
+        : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
+
+      try {
+        setSelectedHotelForDetails(hotel);
+        const details = await getHotelDetails(
+          hotel.hotelId,
+          checkInDate,
+          checkOutDate
+        );
+
+        // Set the selected hotel with additional details
+        setSelectedItems({
+          ...selectedItems,
+          hotel: {
+            ...hotel,
+            details: details,
+            nights: nights,
+            totalPrice: Math.round(
+              parseFloat(
+                hotel.priceBreakdown?.grossPrice?.value ||
+                  hotel.min_total_price ||
+                  0
+              )
+            ),
+          },
+        });
+      } catch (error) {
+        // If details fetch fails, still allow selection with basic info
+        setSelectedItems({
+          ...selectedItems,
+          hotel: {
+            ...hotel,
+            nights: nights,
+            totalPrice: Math.round(
+              parseFloat(
+                hotel.priceBreakdown?.grossPrice?.value ||
+                  hotel.min_total_price ||
+                  0
+              )
+            ),
+          },
+        });
+      }
+    };
+
+    if (isLoadingHotels) {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p>
+                Searching hotels in {tripData?.destinations?.[0]?.location}...
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Choose Your Hotels</h2>
-        <div className="flex items-center space-x-4 text-sm text-gray-600">
-          <span>Check-in: {bookingDetails.checkIn}</span>
-          <span>Check-out: {bookingDetails.checkOut}</span>
-          <span>{nights} nights, {bookingDetails.travelers} guests</span>
-          <Badge variant="outline">
-            {realHotels.length} hotels found
-          </Badge>
-        </div>
-      </div>
+      );
+    }
 
-      {tripData?.destinations && tripData.destinations.length > 1 && (
-        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-blue-800 mb-2">Hotels for Each Destination</h3>
-          <p className="text-sm text-blue-700">
-            You'll need accommodation in each city. We're showing options for your primary destination:
-          </p>
-          <div className="mt-2 text-sm font-medium">{tripData.destinations[0].location}</div>
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Choose Your Hotels</h2>
+          <div className="flex items-center space-x-4 text-sm text-gray-600">
+            <span>Check-in: {bookingDetails.checkIn}</span>
+            <span>Check-out: {bookingDetails.checkOut}</span>
+            <span>
+              {nights} nights, {bookingDetails.travelers} guests
+            </span>
+            <Badge variant="outline">{realHotels.length} hotels found</Badge>
+          </div>
         </div>
-      )}
 
-      {realHotels.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Hotel className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hotels available</h3>
-            <p className="text-gray-600 mb-4">
-              No hotels found for your destination and dates. Please check your travel dates.
+        {tripData?.destinations && tripData.destinations.length > 1 && (
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-medium text-blue-800 mb-2">
+              Hotels for Each Destination
+            </h3>
+            <p className="text-sm text-blue-700">
+              You'll need accommodation in each city. We're showing options for
+              your primary destination:
             </p>
-          </CardContent>
-        </Card>
-      ) : (
-        realHotels.map((hotel) => {
-          // Handle both real API data structure and mock data structure
-          const hotelName = hotel.name || `Hotel in ${tripData?.destinations?.[0]?.location || 'City'}`;
-          const hotelLocation = hotel.address?.lines?.[0] || hotel.location || `${tripData?.destinations?.[0]?.location || 'City'} Center`;
-          const lowestPrice = hotel.lowestPrice || hotel.price || 150;
-          const hasAvailability = hotel.hasAvailability !== false;
-          const rating = hotel.rating || 4.0;
-          
-          // Get amenities from hotel data or use defaults
-          const amenities = hotel.amenities || ['Free WiFi', 'Air Conditioning'];
-          
-          return (
-            <Card 
-              key={hotel.hotelId || hotel.id} 
-              className={`cursor-pointer transition-all ${
-                selectedItems.hotel?.hotelId === hotel.hotelId || selectedItems.hotel?.id === hotel.id 
-                  ? 'ring-2 ring-blue-500' 
-                  : ''
-              } ${!hasAvailability ? 'opacity-60' : ''}`}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <Hotel className="h-8 w-8 text-gray-400" />
-                  </div>
+            <div className="mt-2 text-sm font-medium">
+              {tripData.destinations[0].location}
+            </div>
+          </div>
+        )}
 
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold">{hotelName}</h3>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <div className="flex items-center">
-                            {[...Array(Math.floor(rating))].map((_, i) => (
-                              <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            ))}
-                            <span className="ml-1 text-sm text-gray-600">{rating}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">{hotelLocation}</span>
-                        </div>
-                        
-                        {!hasAvailability && (
-                          <Badge variant="secondary" className="mt-2">
-                            No availability
-                          </Badge>
-                        )}
-                      </div>
+        {realHotels.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Hotel className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                No hotels available
+              </h3>
+              <p className="text-gray-600 mb-4">
+                No hotels found for your destination and dates. Please check
+                your travel dates.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          realHotels.map((hotel) => {
+            const isSelected = selectedItems.hotel?.hotelId === hotel.hotelId;
+            const isLoadingThis =
+              selectedHotelForDetails?.hotelId === hotel.hotelId &&
+              isLoadingHotelDetails;
 
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
-                          ${Math.round(lowestPrice)}
-                        </div>
-                        <div className="text-xs text-gray-500">per night</div>
-                        <div className="text-xs text-gray-500">Total: ${Math.round(lowestPrice * nights)}</div>
-                        <Button
-                          className="mt-2"
-                          onClick={() => setSelectedItems({
-                            ...selectedItems, 
-                            hotel: {
-                              ...hotel,
-                              price: Math.round(lowestPrice),
-                              name: hotelName,
-                              location: hotelLocation,
-                              rating,
-                              amenities
-                            }
-                          })}
-                          variant={
-                            selectedItems.hotel?.hotelId === hotel.hotelId || 
-                            selectedItems.hotel?.id === hotel.id 
-                              ? "default" 
-                              : "outline"
-                          }
-                          disabled={!hasAvailability}
-                        >
-                          {selectedItems.hotel?.hotelId === hotel.hotelId || 
-                           selectedItems.hotel?.id === hotel.id 
-                             ? "Select" 
-                             : hasAvailability ? "Select" : "Unavailable"
-                          }
-                        </Button>
-                      </div>
+            const hotelName = hotel.hotelName || "Hotel";
+            const hotelAddress =
+              hotel.address ||
+              hotel.city ||
+              tripData?.destinations?.[0]?.location ||
+              "";
+            const grossPrice = parseFloat(
+              hotel.priceBreakdown?.grossPrice?.value ||
+                hotel.min_total_price ||
+                0
+            );
+            const currency =
+              hotel.priceBreakdown?.grossPrice?.currency ||
+              hotel.currency ||
+              "INR";
+            const rating = hotel.reviewScore || 0;
+            const reviewCount = hotel.reviewCount || 0;
+            const starRating = hotel.starRating || 0;
+            const reviewScoreWord = hotel.reviewScoreWord || "";
+            const isGeniusDeal = hotel.isGeniusDeal || false;
+            const soldOut = hotel.soldOut || false;
+
+            // Check if hotel has strikethrough price (discount)
+            const strikethroughPrice =
+              hotel.priceBreakdown?.strikethroughPrice?.value;
+            const hasDiscount =
+              strikethroughPrice && strikethroughPrice > grossPrice;
+
+            // Get facilities (if any)
+            const facilities = hotel.facilities?.slice(0, 4) || [];
+
+            return (
+              <Card
+                key={hotel.hotelId}
+                className={`cursor-pointer transition-all ${
+                  isSelected ? "ring-2 ring-blue-500" : ""
+                } ${isLoadingThis ? "opacity-60" : ""}`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    {/* Hotel Image */}
+                    <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                      {hotel.mainPhoto ? (
+                        <img
+                          src={hotel.mainPhoto}
+                          alt={hotelName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            target.parentElement!.innerHTML =
+                              '<div class="h-8 w-8 text-gray-400"><svg>...</svg></div>';
+                          }}
+                        />
+                      ) : (
+                        <Hotel className="h-8 w-8 text-gray-400" />
+                      )}
                     </div>
 
-                    <div className="flex items-center space-x-2 mt-3 flex-wrap">
-                      {amenities.slice(0, 5).map((amenity: string, index: number) => (
-                        <Badge key={index} variant="secondary" className="text-xs mb-1">
-                          {amenity}
-                        </Badge>
-                      ))}
-                      {amenities.length > 5 && (
-                        <Badge variant="outline" className="text-xs mb-1">
-                          +{amenities.length - 5} more
-                        </Badge>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-lg font-semibold">
+                              {hotelName}
+                            </h3>
+                            {isGeniusDeal && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs bg-blue-100 text-blue-800"
+                              >
+                                Genius Deal
+                              </Badge>
+                            )}
+                            {soldOut && (
+                              <Badge variant="destructive" className="text-xs">
+                                Sold Out
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Star Rating */}
+                          {starRating > 0 && (
+                            <div className="flex items-center space-x-2 mb-1">
+                              <div className="flex items-center">
+                                {[...Array(starRating)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className="h-3 w-3 fill-yellow-400 text-yellow-400"
+                                  />
+                                ))}
+                                <span className="ml-1 text-xs text-gray-600">
+                                  {starRating} star
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Review Score */}
+                          {rating > 0 && (
+                            <div className="flex items-center space-x-2 mb-1">
+                              <div className="flex items-center">
+                                <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                                  {rating}
+                                </div>
+                                <span className="ml-2 text-sm text-gray-600">
+                                  {reviewScoreWord}{" "}
+                                  {reviewCount > 0 &&
+                                    `(${reviewCount} reviews)`}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Address */}
+                          <div className="flex items-center space-x-1 mt-1">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm text-gray-600">
+                              {hotelAddress ||
+                                `${hotel.city}, ${hotel.country}`}
+                            </span>
+                          </div>
+
+                          {/* Distance (if available) */}
+                          {hotel.distance && hotel.distance > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {hotel.distance} km from city center
+                            </p>
+                          )}
+
+                          {/* Check-in/Check-out times */}
+                          {(hotel.checkinTime || hotel.checkoutTime) && (
+                            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                              {hotel.checkinTime && (
+                                <span>Check-in: {hotel.checkinTime}</span>
+                              )}
+                              {hotel.checkoutTime && (
+                                <span>Check-out: {hotel.checkoutTime}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Price and Selection */}
+                        <div className="text-right ml-4">
+                          {hasDiscount && (
+                            <div className="text-sm text-gray-500 line-through">
+                              {currency} {Math.round(strikethroughPrice)}
+                            </div>
+                          )}
+                          <div className="text-2xl font-bold text-green-600">
+                            {currency} {Math.round(grossPrice)}
+                          </div>
+                          <div className="text-xs text-gray-500">per night</div>
+                          <div className="text-xs text-gray-500">
+                            Total: {currency} {Math.round(grossPrice * nights)}
+                          </div>
+
+                          <div className="flex space-x-2 mt-2">
+                            <button
+                              onClick={() => {
+                                console.log("=== HOTEL DEBUG ===");
+    console.log("Full hotel object:", hotel);
+    console.log("hotel.hotelId:", hotel.hotelId);
+    console.log("hotel.hotel_id:", hotel.hotel_id);
+    console.log("hotel.id:", hotel.id);
+    console.log("Object keys:", Object.keys(hotel));
+    console.log("==================");
+
+                                setSelectedHotelForOverlay(hotel);
+                                setShowHotelOverlay(true);
+                              }}
+                              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
+                            >
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => handleHotelSelect(hotel)}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                isSelected
+                                  ? "bg-blue-600 text-white"
+                                  : "bg-blue-600 text-white hover:bg-blue-700"
+                              }`}
+                              disabled={isLoadingThis || soldOut}
+                            >
+                              {isLoadingThis
+                                ? "Loading..."
+                                : soldOut
+                                ? "Unavailable"
+                                : isSelected
+                                ? "Selected"
+                                : "Select"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Facilities */}
+                      {facilities.length > 0 && (
+                        <div className="flex items-center space-x-2 mt-3 flex-wrap">
+                          {facilities.map((facility: any, index: number) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-xs mb-1"
+                            >
+                              {facility.name || facility}
+                            </Badge>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })
-      )}
-    </div>
-  );
-};
-
-
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
+    );
+  };
 
   const CabsStep = () => {
     const days = getTripDuration();
@@ -1582,7 +1954,7 @@ const getCityCode = async (cityName: string) => {
             <div className="flex items-center space-x-4">
               {bookingStep !== "payment" && (
                 <div className="text-sm text-gray-600">
-                  Estimated Total: ${getTotalAmount()}
+                  Estimated Total: INR {getTotalAmount()}
                 </div>
               )}
 
@@ -1601,6 +1973,47 @@ const getCityCode = async (cityName: string) => {
         </div>
       </div>
       <Footer />
+
+      {showHotelOverlay && selectedHotelForOverlay && (
+  <HotelDetailsOverlay
+    isOpen={showHotelOverlay}
+    onClose={() => setShowHotelOverlay(false)}
+    hotelId={
+      selectedHotelForOverlay.hotelId || 
+      selectedHotelForOverlay.hotel_id || 
+      selectedHotelForOverlay.id ||
+      // Add other possible ID field names from your search API
+      selectedHotelForOverlay.property_id
+    }
+    checkInDate={bookingDetails.checkIn}
+    checkOutDate={bookingDetails.checkOut}
+    adults={tripData?.adults || 2}
+    children={tripData?.children || 0}
+    onSelect={(hotelDetails) => {
+      const nights = getTripDuration() - 1;
+      const totalPrice = Math.round(
+        parseFloat(
+          hotelDetails.pricing?.compositePriceBreakdown?.gross_amount_hotel_currency?.value?.toString() ||
+          hotelDetails.pricing?.productPriceBreakdown?.gross_amount_hotel_currency?.value?.toString() ||
+          "0"
+        )
+      );
+
+      setSelectedItems({
+        ...selectedItems,
+        hotel: {
+          ...hotelDetails,
+          nights,
+          totalPrice,
+          hotelId: hotelDetails.hotelInfo?.hotelId,
+          hotelName: hotelDetails.hotelInfo?.hotelName,
+        },
+      });
+      setShowHotelOverlay(false);
+    }}
+    makeAuthenticatedApiRequest={makeAuthenticatedApiRequest}
+  />
+)}
     </div>
   );
 };
