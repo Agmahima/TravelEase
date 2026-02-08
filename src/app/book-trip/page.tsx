@@ -34,6 +34,27 @@ import {
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import HotelDetailsOverlay from "@/components/HotelDetailsOverlay";
+import { da } from "date-fns/locale";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+interface PaymentStepProps {
+  selectedItems: {
+    flight?: any;
+    hotel?: any;
+    cab?: any;
+  };
+  tripId: string;
+  userId: string | number;
+  travelers: any[];
+  getTripDuration: () => number;
+  getTotalAmount: () => number;
+  onPaymentSuccess: (bookingId: string) => void;
+}
 
 // Types based on your trip planner
 interface Activity {
@@ -214,14 +235,18 @@ const TravelBookingFlow = () => {
   const [realHotels, setRealHotels] = useState<any[]>([]);
   const [isLoadingHotels, setIsLoadingHotels] = useState(false);
   const [destinationId, setDestinationId] = useState<string | null>(null);
-  const [selectedHotelForDetails, setSelectedHotelForDetails] =
-    useState<any>(null);
+  const [selectedHotelForDetails, setSelectedHotelForDetails] =useState<any>(null);
   const [hotelDetails, setHotelDetails] = useState<any>(null);
   const [isLoadingHotelDetails, setIsLoadingHotelDetails] = useState(false);
 
   const [showHotelOverlay, setShowHotelOverlay] = useState<boolean>(false);
-  const [selectedHotelForOverlay, setSelectedHotelForOverlay] =
-    useState<any>(null);
+  const [selectedHotelForOverlay, setSelectedHotelForOverlay] =useState<any>(null);
+  const [flightSearchSessionId, setFlightSearchSessionId] = useState<string | null>(null);
+  const [hotelSearchSessionId, setHotelSearchSessionId] = useState<string | null>(null);
+
+  const [travelers, setTravelers] = useState<any[]>([]);
+
+  const token = localStorage.getItem("authToken");
 
   const { data: tripData, isLoading: isTripLoading } = useQuery<TripData>({
     queryKey: ["trip", tripId],
@@ -280,7 +305,36 @@ const TravelBookingFlow = () => {
         setIsLoadingFlights(true);
         try {
           const flights = await generateRealFlights();
+          console.log("Loaded flights:", flights);
           setRealFlights(flights);
+
+          if (flights.length > 0) {
+            const saveResponse = await makeAuthenticatedApiRequest(
+              "POST",
+              "/api/search-results/flights/save",
+              {
+                tripId: tripId,
+                userId: user?.id,
+                searchParams: {
+                  originCode:
+                    flights[0]?.itineraries[0]?.segments[0]?.departure
+                      ?.iataCode || "DEL",
+                  destinationCode:
+                    flights[0]?.itineraries[0]?.segments.slice(-1)[0]?.arrival
+                      ?.iataCode || "BOM",
+                  departureDate: tripData?.startDate,
+                  returnDate: tripData?.endDate,
+                  adults: tripData?.adults || 2,
+                  children: tripData?.children || 0,
+                },
+                resultCount: flights.length,
+              }
+            );
+
+            if (saveResponse.success) {
+              setFlightSearchSessionId(saveResponse.searchSessionId);
+            }
+          }
         } catch (error) {
           console.error("Error loading flights:", error);
           toast({
@@ -327,6 +381,35 @@ const TravelBookingFlow = () => {
             checkOutDate
           );
           setRealHotels(hotels);
+          console.log("Loaded hotels:", hotels);
+
+          if (hotels.length > 0) {
+            try {
+              const savedResponse = await makeAuthenticatedApiRequest(
+                "POST",
+                "/api/search-results/hotels/save",
+                {
+                  tripId,
+                  userId: user?.id,
+                  searchParams: {
+                    destId: cityCode, // ✅ Changed from location to destId
+                    destination: firstDestination, // ✅ Added destination city name
+                    checkinDate: new Date(checkInDate), // ✅ Changed to checkinDate (lowercase 'i') and convert to Date
+                    checkoutDate: new Date(checkOutDate),
+                    adults: tripData?.adults || 2,
+                    children: tripData?.children || 0,
+                  },
+                  hotels,
+                }
+              );
+
+              if (savedResponse.success) {
+                setHotelSearchSessionId(savedResponse.searchSessionId);
+              }
+            } catch (err) {
+              console.error("Failed to save hotels:", err);
+            }
+          }
         } catch (error) {
           console.error("Error loading hotels:", error);
           toast({
@@ -346,6 +429,28 @@ const TravelBookingFlow = () => {
       loadHotels();
     }
   }, [bookingStep, selectedBookings.hotels, tripData]);
+
+  // Add this useEffect after your other useEffects
+useEffect(() => {
+  if (tripData && user) {
+    // Create travelers based on trip adults/children
+    const adultsCount = tripData.adults || 2;
+    const childrenCount = tripData.children || 0;
+    const totalTravelers = adultsCount + childrenCount;
+
+    // Generate travelers array
+    const travelersArray = Array.from({ length: totalTravelers }, (_, index) => ({
+      _id: user.id, // Use same user ID for now (or fetch actual traveler profiles)
+      id: user.id,
+      name: index === 0 ? user.fullName : `Traveler ${index + 1}`,
+      isLeadTraveler: index === 0,
+      type: index < adultsCount ? 'adult' : 'child'
+    }));
+
+    setTravelers(travelersArray);
+    console.log('👥 Travelers initialized:', travelersArray);
+  }
+}, [tripData, user]);
 
   // API request helper
   const makeAuthenticatedApiRequest = async (
@@ -546,17 +651,15 @@ const TravelBookingFlow = () => {
         ? formatDateForApi(tripData.startDate)
         : format(new Date(), "yyyy-MM-dd");
 
-      // Prepare search parameters
       const params = new URLSearchParams({
         originCode,
         destinationCode,
         dateOfDeparture: departureDate,
         adults: (tripData.adults || 2).toString(),
-        currencyCode: "USD",
+        currencyCode: "INR",
         max: "20",
       });
 
-      // Add optional parameters
       if (tripData.children && tripData.children > 0) {
         params.append("children", tripData.children.toString());
       }
@@ -570,15 +673,12 @@ const TravelBookingFlow = () => {
       console.log("API Parameters:", params.toString());
       console.log("Full API URL:", `/api/flights/flight-search?${params}`);
 
-      // Make the API call - REMOVED the extra .json() call
       const response = await makeAuthenticatedApiRequest(
         "GET",
         `/api/flights/flight-search?${params}`
       );
 
-      // The response is already parsed JSON from makeAuthenticatedApiRequest
       console.log("Flight search response:", response);
-
       return response.data || [];
     } catch (error) {
       console.error("Error fetching real flights:", error);
@@ -586,7 +686,6 @@ const TravelBookingFlow = () => {
     }
   };
 
-  // Helper functions for flight display
   const formatDuration = (duration: string) => {
     const match = duration.match(/PT(\d+H)?(\d+M)?/);
     if (!match) return duration;
@@ -882,21 +981,23 @@ const TravelBookingFlow = () => {
 
   const getTotalAmount = () => {
     let total = 0;
+    const travelerCount = travelers.length || bookingDetails.travelers || 1; // ✅ Use travelers state
+
     if (selectedItems.flight) {
       const price =
         typeof selectedItems.flight.price === "object"
           ? parseFloat(selectedItems.flight.price.total)
           : selectedItems.flight.price;
-      total += price * bookingDetails.travelers;
+      total += price * travelerCount;
     }
-   if (selectedItems.hotel) {
+    if (selectedItems.hotel) {
       // Use totalPrice that was calculated when hotel was selected
       const hotelPrice = selectedItems.hotel.totalPrice || 0;
-      console.log('Hotel pricing debug:', {
+      console.log("Hotel pricing debug:", {
         totalPrice: selectedItems.hotel.totalPrice,
         nights: selectedItems.hotel.nights,
         hotelPrice,
-        selectedHotel: selectedItems.hotel
+        selectedHotel: selectedItems.hotel,
       });
       total += hotelPrice;
     }
@@ -1145,6 +1246,100 @@ const TravelBookingFlow = () => {
   );
 
   const TransportationStep = () => {
+    const handleFlightSelect = async (flight: any) => {
+      try {
+        setSelectedItems({ ...selectedItems, flight });
+
+        // Calculate total price for all travelers
+        const pricePerPerson = parseFloat(flight.price?.total || flight.price || 0);
+        const totalTravelers = travelers.length || bookingDetails.travelers || 1;
+        const totalFlightPrice = pricePerPerson * totalTravelers;
+
+        console.log('💰 Flight pricing:', {
+          pricePerPerson,
+          totalTravelers,
+          totalFlightPrice,
+          travelers: travelers.length
+        });
+        // Prepare travelers data - ensure we have valid IDs
+        const travelersData = travelers.length > 0 
+          ? travelers.map((t, idx) => ({
+              travelerId: t._id || t.id || user?.id, // Ensure string ID
+              type: t.type || (idx < (tripData?.adults || 2) ? 'adult' : 'child'),
+              name: t.name || user?.fullName || `Traveler ${idx + 1}`
+            }))
+          : Array.from({ length: totalTravelers }, (_, idx) => ({
+              travelerId: user?.id,
+              type: idx < (tripData?.adults || 2) ? 'adult' : 'child',
+              name: user?.fullName || `Traveler ${idx + 1}`
+            }));
+
+            const token = localStorage.getItem("authToken");
+
+        console.log('👥 Sending travelers data:', travelersData);
+        
+        const response = await fetch(
+          "http://localhost:5000/api/flights/flight-booking",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              flight,
+              name: {
+                first: user?.fullName || "John",
+                last: user?.fullName || "Doe",
+              },
+              userId: user?.id, // ✅ from logged-in user
+              tripId, // ✅ if available
+              bookingId: null, // ✅ if user is modifying an existing booking
+             travelers: travelersData,
+              totalTravelers,
+              totalPrice: totalFlightPrice,
+              pricePerPerson 
+            }),
+          }
+        );
+    //     const travelersList = travelers.map((traveler, index) => ({
+    //   travelerId: traveler._id || traveler.id || currentUserId,
+    //   isLeadTraveler: index === 0 // First traveler is lead
+    // }));
+         
+        const data = await response.json();
+        console.log("Flight Data",data.data);
+
+        if (!response.ok) {
+          console.error("❌ Failed to save flight booking:", data);
+          toast({
+            title: "Booking Failed",
+            description: data.message || "Could not save your flight booking.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("✅ Flight booking saved:", data);
+        toast({
+          title: "Flight Booked!",
+          description: "Your flight has been saved successfully.",
+        });
+
+        // optionally update local state with new bookingId
+        if (data.data?.parentBookingId) {
+          localStorage.setItem("currentBookingId", data.data.parentBookingId);
+        }
+      } catch (error) {
+        console.error("Error saving flight booking:", error);
+        toast({
+          title: "Network Error",
+          description: "Could not connect to booking service.",
+          variant: "destructive",
+        });
+      }
+    };
+
     if (isLoadingFlights) {
       return (
         <div className="space-y-4">
@@ -1209,6 +1404,9 @@ const TravelBookingFlow = () => {
               flight.itineraries[0].segments[
                 flight.itineraries[0].segments.length - 1
               ];
+            const pricePerPerson = parseFloat(flight.price.total);
+            console.log("PricePerPerson :", pricePerPerson)
+
 
             return (
               <Card
@@ -1266,13 +1464,13 @@ const TravelBookingFlow = () => {
 
                     <div className="text-right space-y-2">
                       <div className="text-2xl font-bold text-blue-600">
-                        ${flight.price.total}
+                        ${pricePerPerson.toFixed(2)}
                       </div>
                       <div className="text-xs text-gray-500">per person</div>
                       <Button
-                        onClick={() =>
-                          setSelectedItems({ ...selectedItems, flight })
-                        }
+                        onClick={() => handleFlightSelect(flight)}
+                        // setSelectedItems({ ...selectedItems, flight })
+
                         variant={
                           selectedItems.flight?.id === flight.id
                             ? "default"
@@ -1299,12 +1497,9 @@ const TravelBookingFlow = () => {
     const nights = getTripDuration() - 1;
 
     const handleHotelSelect = async (hotel: any) => {
-      // If this hotel is already selected, just set it
-      if (selectedItems.hotel?.hotelId === hotel.hotelId) {
-        return;
-      }
+      // If already selected, return
+      if (selectedItems.hotel?.hotelId === hotel.hotelId) return;
 
-      // Get detailed information for the selected hotel
       const checkInDate = tripData?.startDate
         ? new Date(tripData.startDate).toISOString().split("T")[0]
         : format(new Date(), "yyyy-MM-dd");
@@ -1313,46 +1508,112 @@ const TravelBookingFlow = () => {
         ? new Date(tripData.endDate).toISOString().split("T")[0]
         : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
 
+      const nights = getTripDuration() - 1;
+
       try {
         setSelectedHotelForDetails(hotel);
+
         const details = await getHotelDetails(
           hotel.hotelId,
           checkInDate,
           checkOutDate
         );
 
-        // Set the selected hotel with additional details
-        setSelectedItems({
-          ...selectedItems,
-          hotel: {
-            ...hotel,
-            details: details,
-            nights: nights,
+        // Prepare payload to send to backend
+        const payload = {
+          tripId,
+          userId: user?.id,
+          bookingId: tripData._id, // ✅ This should come from trip or booking context
+          hotelDetails: {
+            hotelId: hotel.hotelId,
+            hotelName: hotel.hotelName,
+            address: hotel.address,
+            starRating: hotel.starRating,
+            propertyType: hotel.propertyType,
+          },
+          stayDetails: {
+            searchParams: {
+              roomQuantity: 1,
+              adults: 2,
+              children: 0,
+              checkIn: checkInDate,
+              checkOut: checkOutDate,
+            },
+
+            checkIn: checkInDate,
+            checkOut: checkOutDate,
+            nights,
+            rooms: [
+              {
+                roomType: details?.roomType || "Standard",
+                assignedTravelers: [], // will be updated later
+                occupancy: { adults: 2, children: 0 },
+              },
+            ],
+          },
+          leadGuest: {
+            travelerId: tripData._id, // ✅ Add this if available
+          },
+          pricing: {
+            basePrice: parseFloat(
+              hotel.priceBreakdown?.grossPrice?.value ||
+                hotel.min_total_price ||
+                0
+            ),
             totalPrice: Math.round(
               parseFloat(
                 hotel.priceBreakdown?.grossPrice?.value ||
                   hotel.min_total_price ||
                   0
-              )
+              ) * nights
             ),
+            currency:
+              hotel.priceBreakdown?.grossPrice?.currency ||
+              hotel.currency ||
+              "INR",
           },
-        });
+          apiDetails: {
+            hotelId: hotel.id || hotel.hotelId,
+            provider: "Amadeus",
+          },
+
+          specialRequests: "",
+          additionalServices: [],
+        };
+
+        // 🟢 Save selected hotel in backend (as draft booking)
+        const response = await fetch(
+          "http://localhost:5000/api/hotels/bookings",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+            credentials: "include", // ✅ include session cookie
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          console.log("✅ Hotel booking saved successfully:", result);
+          setSelectedItems({
+            ...selectedItems,
+            hotel: {
+              ...hotel,
+              details,
+              nights,
+              totalPrice: payload.pricing.totalPrice,
+              status: "draft",
+              hotelBookingId: result.data.hotelBookingId,
+            },
+          });
+        } else {
+          console.error("❌ Failed to save hotel booking:", result);
+        }
       } catch (error) {
-        // If details fetch fails, still allow selection with basic info
-        setSelectedItems({
-          ...selectedItems,
-          hotel: {
-            ...hotel,
-            nights: nights,
-            totalPrice: Math.round(
-              parseFloat(
-                hotel.priceBreakdown?.grossPrice?.value ||
-                  hotel.min_total_price ||
-                  0
-              )
-            ),
-          },
-        });
+        console.error("❌ Error selecting hotel:", error);
       }
     };
 
@@ -1582,12 +1843,12 @@ const TravelBookingFlow = () => {
                             <button
                               onClick={() => {
                                 console.log("=== HOTEL DEBUG ===");
-    console.log("Full hotel object:", hotel);
-    console.log("hotel.hotelId:", hotel.hotelId);
-    console.log("hotel.hotel_id:", hotel.hotel_id);
-    console.log("hotel.id:", hotel.id);
-    console.log("Object keys:", Object.keys(hotel));
-    console.log("==================");
+                                console.log("Full hotel object:", hotel);
+                                console.log("hotel.hotelId:", hotel.hotelId);
+                                console.log("hotel.hotel_id:", hotel.hotel_id);
+                                console.log("hotel.id:", hotel.id);
+                                console.log("Object keys:", Object.keys(hotel));
+                                console.log("==================");
 
                                 setSelectedHotelForOverlay(hotel);
                                 setShowHotelOverlay(true);
@@ -1749,133 +2010,703 @@ const TravelBookingFlow = () => {
     );
   };
 
-  const PaymentStep = () => {
-    const nights = getTripDuration() - 1;
-    const days = getTripDuration();
+  
+const PaymentStep: React.FC<PaymentStepProps> = ({
+  selectedItems,
+  tripId,
+  userId,
+  travelers,
+  getTripDuration,
+  getTotalAmount,
+  onPaymentSuccess
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const { toast } = useToast();
 
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Booking Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Booking Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {selectedItems.flight && <PaymentStepFlightDisplay />}
+  const [customerDetails, setCustomerDetails] = useState({
+    name: user?.fullName || '',
+    email: user?.email || '',
+    phone: ''
+  });
 
-              {selectedItems.hotel && (
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Hotel className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium">{selectedItems.hotel.name}</p>
-                      <p className="text-sm text-gray-600">{nights} nights</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">
-                      ${selectedItems.hotel.price * nights}
-                    </p>
-                    <p className="text-xs text-gray-600">{nights} nights</p>
-                  </div>
-                </div>
-              )}
+  const nights = getTripDuration() - 1;
+  const days = getTripDuration();
 
-              {selectedItems.cab && (
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Car className="h-5 w-5 text-purple-600" />
-                    <div>
-                      <p className="font-medium">
-                        {selectedItems.cab.type} Cab
-                      </p>
-                      <p className="text-sm text-gray-600">{days} days</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">
-                      ${selectedItems.cab.price * days}
-                    </p>
-                    <p className="text-xs text-gray-600">{days} days</p>
-                  </div>
-                </div>
-              )}
+  // Load Razorpay SDK once when component mounts
+  useEffect(() => {
+    if (!razorpayLoaded) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
 
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between text-lg font-bold">
-                  <span>Total Amount</span>
-                  <span className="text-2xl text-green-600">
-                    ${getTotalAmount()}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      script.onload = () => {
+        if (typeof window.Razorpay !== 'undefined') {
+          console.log('✅ Razorpay SDK loaded successfully');
+          setRazorpayLoaded(true);
+        } else {
+          console.error('❌ Razorpay SDK failed to load');
+          toast({
+            title: 'Error',
+            description: 'Failed to load payment gateway',
+            variant: 'destructive'
+          });
+        }
+      };
 
-          {/* Payment Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="cardName">Cardholder Name</Label>
-                <Input id="cardName" placeholder="John Doe" />
-              </div>
+      script.onerror = () => {
+        console.error('❌ Failed to load Razorpay script');
+        toast({
+          title: 'Error',
+          description: 'Failed to load payment gateway',
+          variant: 'destructive'
+        });
+      };
 
-              <div className="space-y-2">
-                <Label htmlFor="cardNumber">Card Number</Label>
-                <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
-              </div>
+      document.body.appendChild(script);
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="expiry">Expiry Date</Label>
-                  <Input id="expiry" placeholder="MM/YY" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cvv">CVV</Label>
-                  <Input id="cvv" placeholder="123" />
-                </div>
-              </div>
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+  }, []);
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" placeholder="john@example.com" />
-              </div>
+  // Initiate payment
+  const initiatePayment = async (bookingId: string) => {
+    try {
+      // Get userId - check multiple sources
+      const currentUserId = userId || user?.id ;
+      
+      if (!currentUserId) {
+        throw new Error('User ID not found. Please login again.');
+      }
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" placeholder="+1 (555) 123-4567" />
-              </div>
+      console.log('💳 Initiating payment for booking:', bookingId);
+      console.log('👤 Using userId:', currentUserId);
+      console.log("🚀 FRONTEND SENDING AMOUNT:", getTotalAmount());
 
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-lg py-6">
-                Pay ${getTotalAmount()}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  };
 
-  const renderStepContent = () => {
-    switch (bookingStep) {
-      case "confirmation":
-        return <BookingConfirmation />;
-      case "transportation":
-        return <TransportationStep />;
-      case "hotels":
-        return <HotelsStep />;
-      case "cabs":
-        return <CabsStep />;
-      case "payment":
-        return <PaymentStep />;
-      default:
-        return <BookingConfirmation />;
+      const response = await fetch('http://localhost:5001/api/payment/initiate', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          bookingId,
+          userId: currentUserId, // Use the resolved userId
+          amount: getTotalAmount(),
+          currency: 'INR',
+          paymentType: 'booking',
+          
+          serviceAllocation: [
+            ...(selectedItems.flight ? [{
+              serviceType: 'flight',
+              serviceId: selectedItems.flight.id,
+              allocatedAmount: parseFloat(selectedItems.flight.price?.total || selectedItems.flight.price || 0),
+              currency: 'INR'
+            }] : []),
+            ...(selectedItems.hotel ? [{
+              serviceType: 'hotel',
+              serviceId: selectedItems.hotel.hotelBookingId || selectedItems.hotel.hotelId,
+              allocatedAmount: selectedItems.hotel.totalPrice || 0,
+              currency: 'INR'
+            }] : []),
+            ...(selectedItems.cab ? [{
+              serviceType: 'cab',
+              serviceId: selectedItems.cab.id,
+              allocatedAmount: selectedItems.cab.price * days,
+              currency: 'INR'
+            }] : [])
+          ]
+        })
+      });
+
+      const data = await response.json();
+
+      console.log('💳 Payment initiation response:', data);
+
+      if (!data.success || !data.payment) {
+        throw new Error(data.error || 'Payment initiation failed');
+      }
+
+      
+
+      // return data;
+      return {
+      success: true,
+      razorpayOrder: {
+        id: data.payment.razorpayOrderId,
+        amount: data.payment.amount,
+        currency: data.payment.currency
+      },
+      key: data.payment.key
+    };
+
+    } catch (error: any) {
+      console.error('❌ Payment initiation error:', error);
+      throw new Error(error.message || 'Failed to initiate payment');
     }
   };
+
+  // Verify payment
+  const verifyPayment = async (razorpayResponse: any, bookingId: string) => {
+    try {
+      console.log('🔍 Verifying payment:', razorpayResponse);
+
+      const response = await fetch('http://localhost:5001/api/payment/verify', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          razorpay_order_id: razorpayResponse.razorpay_order_id,
+          razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+          razorpay_signature: razorpayResponse.razorpay_signature,
+          bookingId
+        })
+      });
+
+      const data = await response.json();
+
+      console.log('✅ Payment verification response:', data);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Payment verification failed');
+      }
+
+      toast({
+        title: 'Payment Successful! 🎉',
+        description: 'Your booking has been confirmed'
+      });
+
+      // Call success callback
+      onPaymentSuccess(bookingId);
+
+    } catch (error: any) {
+      console.error('❌ Payment verification error:', error);
+      toast({
+        title: 'Payment Verification Failed',
+        description: error.message || 'Please contact support',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+
+  // Open Razorpay checkout
+  const openRazorpayCheckout = (paymentData: any, bookingId: string) => {
+    console.log('🚀 openRazorpayCheckout called');
+    console.log('📦 Payment data received:', paymentData);
+    console.log('🆔 Booking ID:', bookingId);
+    console.log('🔍 Window.Razorpay exists:', typeof window.Razorpay !== 'undefined');
+
+    if (!window.Razorpay) {
+      console.error('❌ Razorpay SDK not loaded on window');
+      toast({
+        title: 'Error',
+        description: 'Payment gateway not loaded. Please refresh the page.',
+        variant: 'destructive'
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (!paymentData || !paymentData.razorpayOrder) {
+      console.error('❌ Invalid payment data:', paymentData);
+      toast({
+        title: 'Error',
+        description: 'Invalid payment data received',
+        variant: 'destructive'
+      });
+      setLoading(false);
+      return;
+    }
+
+    const options = {
+      // key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_LDXAXgeLRFhPHY',
+      key: paymentData.key,
+      // amount: paymentData.razorpayOrder.amount,
+      currency: paymentData.razorpayOrder.currency,
+      order_id: paymentData.razorpayOrder.id,
+      name: 'Travel Booking',
+      description: `Booking Payment - ${bookingId.substring(0, 8)}...`,
+      image: '/logo.png', // Add your logo
+      handler: async (response: any) => {
+        console.log('✅ Payment handler called:', response);
+        await verifyPayment(response, bookingId);
+      },
+      prefill: {
+        name: customerDetails.name,
+        email: customerDetails.email,
+        contact: customerDetails.phone
+      },
+      notes: {
+        bookingId: bookingId,
+        tripId: tripId
+      },
+      theme: {
+        color: '#16a34a'
+      },
+      modal: {
+        ondismiss: () => {
+          console.log('❌ Payment modal dismissed by user');
+          setLoading(false);
+          toast({
+            title: 'Payment Cancelled',
+            description: 'You cancelled the payment',
+            variant: 'destructive'
+          });
+        }
+      }
+    };
+
+     // Final verification
+  console.log('🔬 Options check:', {
+    hasAmount: 'amount' in options,
+    keys: Object.keys(options)
+  });
+
+    console.log('🔧 Razorpay options:', {
+      key: options.key.substring(0, 10) + '...',
+      // amount: options.amount,
+      currency: options.currency,
+      order_id: options.order_id,
+      name: options.name
+    });
+
+    try {
+      console.log('🎬 Creating Razorpay instance...');
+      const razorpay = new window.Razorpay(options);
+      
+      console.log('✅ Razorpay instance created:', razorpay);
+      
+      razorpay.on('payment.failed', function (response: any) {
+        console.error('❌ Payment failed event:', response.error);
+        toast({
+          title: 'Payment Failed',
+          description: response.error.description || 'Payment could not be processed',
+          variant: 'destructive'
+        });
+        setLoading(false);
+      });
+      
+      console.log('🎯 Calling razorpay.open()...');
+      razorpay.open();
+      console.log('✅ Razorpay.open() called successfully');
+    } catch (error: any) {
+      console.error('❌ Error in openRazorpayCheckout:', error);
+      console.error('❌ Error stack:', error.stack);
+      toast({
+        title: 'Error',
+        description: 'Failed to open payment gateway: ' + error.message,
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+  
+
+  // Main payment handler
+  const handlePayment = async () => {
+    console.log('🎯 Payment button clicked');
+    console.log('🔍 Current state:', {
+      razorpayLoaded,
+      loading,
+      customerDetails,
+      windowRazorpay: typeof window.Razorpay
+    });
+
+    // Validation
+    if (!customerDetails.name || !customerDetails.email || !customerDetails.phone) {
+      console.warn('⚠️ Missing customer details:', customerDetails);
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in all customer details (Name, Email, and Phone)',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Trim whitespace
+    const trimmedEmail = customerDetails.email.trim();
+    const trimmedPhone = customerDetails.phone.trim();
+
+    if (!trimmedEmail || !trimmedPhone) {
+      console.warn('⚠️ Empty fields after trim');
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in all customer details',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      console.warn('⚠️ Invalid email:', trimmedEmail);
+      toast({
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // More lenient phone validation - just check if it has digits
+    const phoneDigits = trimmedPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      console.warn('⚠️ Invalid phone:', trimmedPhone);
+      toast({
+        title: 'Invalid Phone Number',
+        description: 'Please enter a valid phone number (at least 10 digits)',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Check if Razorpay is actually available
+    if (typeof window.Razorpay === 'undefined') {
+      console.error('❌ Razorpay not available on window object');
+      toast({
+        title: 'Payment Gateway Error',
+        description: 'Please refresh the page and try again',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!razorpayLoaded) {
+      console.warn('⚠️ Razorpay state not loaded yet');
+      toast({
+        title: 'Please Wait',
+        description: 'Payment gateway is loading...',
+        variant: 'default'
+      });
+      return;
+    }
+
+    console.log('✅ All validations passed, starting payment flow...');
+    setLoading(true);
+
+    try {
+      // Option 1: Try to create draft booking
+      // let bookingId = tripId; 
+      let bookingId = localStorage.getItem("currentBookingId");
+
+      
+      // try {
+      //   console.log('📝 Step 1: Attempting to create draft booking...');
+      //   bookingId = await createDraftBooking();
+      //   console.log('✅ Booking created:', bookingId);
+      // } catch (bookingError) {
+      //   // console.warn('⚠️ Could not create draft booking, using tripId instead:', bookingError.message);
+      //   console.log('🔄 Using tripId as bookingId:', tripId);
+        
+      //   // Continue with tripId - don't fail here
+      //   if (!tripId) {
+      //     throw new Error('No trip ID available for payment');
+      //   }
+      // }
+
+      if (!bookingId) {
+        throw new Error('Booking ID not received and no tripId available');
+      }
+
+      // Step 2: Initiate payment
+      console.log('💳 Step 2: Initiating payment...');
+      const paymentData = await initiatePayment(bookingId);
+      console.log('✅ Payment initiated:', paymentData);
+
+      if (!paymentData || !paymentData.razorpayOrder) {
+        throw new Error('Invalid payment data received');
+      }
+
+      // Step 3: Open Razorpay
+      console.log('🚀 Step 3: Opening Razorpay checkout...');
+      console.log('🔑 Razorpay Order ID:', paymentData.razorpayOrder.id);
+      openRazorpayCheckout(paymentData, bookingId);
+    } catch (error: any) {
+      console.error('❌ Payment flow error:', error);
+      console.error('❌ Error stack:', error.stack);
+      toast({
+        title: 'Error',
+        description: error.message || 'Something went wrong',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Booking Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Booking Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {selectedItems.flight && (
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Plane className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium">Flight</p>
+                    <p className="text-sm text-gray-600">
+                      {selectedItems.flight.itineraries?.[0]?.segments?.[0]?.departure?.iataCode || 'DEP'} → 
+                      {selectedItems.flight.itineraries?.[0]?.segments?.slice(-1)[0]?.arrival?.iataCode || 'ARR'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">
+                    ₹{parseFloat(selectedItems.flight.price?.total || selectedItems.flight.price || 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {selectedItems.hotel && (
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Hotel className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="font-medium">{selectedItems.hotel.hotelName || 'Hotel'}</p>
+                    <p className="text-sm text-gray-600">{nights} nights</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">₹{selectedItems.hotel.totalPrice || 0}</p>
+                  <p className="text-xs text-gray-600">{nights} nights</p>
+                </div>
+              </div>
+            )}
+
+            {selectedItems.cab && (
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Car className="h-5 w-5 text-purple-600" />
+                  <div>
+                    <p className="font-medium">{selectedItems.cab.type} Cab</p>
+                    <p className="text-sm text-gray-600">{days} days</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">₹{selectedItems.cab.price * days}</p>
+                  <p className="text-xs text-gray-600">{days} days</p>
+                </div>
+              </div>
+            )}
+
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between text-lg font-bold">
+                <span>Total Amount</span>
+                <span className="text-2xl text-green-600">
+                  ₹{getTotalAmount()}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Customer Details Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Customer Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input 
+                id="name" 
+                placeholder="John Doe" 
+                value={customerDetails.name}
+                onChange={(e) => setCustomerDetails({
+                  ...customerDetails,
+                  name: e.target.value
+                })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address *</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="john@example.com"
+                value={customerDetails.email}
+                onChange={(e) => setCustomerDetails({
+                  ...customerDetails,
+                  email: e.target.value
+                })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input 
+                id="phone" 
+                placeholder="+91 9999999999"
+                value={customerDetails.phone}
+                onChange={(e) => setCustomerDetails({
+                  ...customerDetails,
+                  phone: e.target.value
+                })}
+                className={!customerDetails.phone ? 'border-red-300' : ''}
+                required
+              />
+              {!customerDetails.phone && (
+                <p className="text-xs text-red-500">Phone number is required</p>
+              )}
+              <p className="text-xs text-gray-500">Enter at least 10 digits</p>
+            </div>
+
+            {!razorpayLoaded && (
+              <div className="bg-yellow-50 p-3 rounded-lg">
+                <p className="text-sm text-yellow-800 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading payment gateway...
+                </p>
+              </div>
+            )}
+
+            {razorpayLoaded && (
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💳 You'll be redirected to a secure Razorpay payment gateway
+                </p>
+              </div>
+            )}
+
+            <Button 
+              className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+              onClick={handlePayment}
+              disabled={loading || !razorpayLoaded}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </span>
+              ) : !razorpayLoaded ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </span>
+              ) : (
+                `Pay ₹${getTotalAmount()}`
+              )}
+            </Button>
+
+            <p className="text-xs text-gray-500 text-center">
+              By clicking "Pay", you agree to our terms and conditions
+            </p>
+
+            {/* Debug Test Button - Remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  console.log('🧪 Testing Razorpay directly...');
+                  if (typeof window.Razorpay === 'undefined') {
+                    console.error('❌ Razorpay not loaded');
+                    toast({
+                      title: 'Razorpay Not Loaded',
+                      description: 'SDK is not available',
+                      variant: 'destructive'
+                    });
+                    return;
+                  }
+
+                  const testOptions = {
+                    key: 'rzp_test_LDXAXgeLRFhPHY',
+                    amount: 100,
+                    currency: 'INR',
+                    name: 'Test Payment',
+                    description: 'Testing Razorpay Integration',
+                    handler: function (response: any) {
+                      console.log('✅ Test payment success:', response);
+                      toast({
+                        title: 'Test Successful',
+                        description: 'Razorpay is working correctly'
+                      });
+                    },
+                    prefill: {
+                      name: 'Test User',
+                      email: 'test@example.com',
+                      contact: '9999999999'
+                    },
+                    theme: {
+                      color: '#16a34a'
+                    }
+                  };
+
+                  try {
+                    const rzp = new window.Razorpay(testOptions);
+                    rzp.open();
+                    console.log('✅ Test Razorpay opened');
+                  } catch (error) {
+                    console.error('❌ Test failed:', error);
+                    toast({
+                      title: 'Test Failed',
+                      description: String(error),
+                      variant: 'destructive'
+                    });
+                  }
+                }}
+              >
+                🧪 Test Razorpay (Dev Only)
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+  const renderStepContent = () => {
+  switch (bookingStep) {
+    case "confirmation":
+      return <BookingConfirmation />;
+    case "transportation":
+      return <TransportationStep />;
+    case "hotels":
+      return <HotelsStep />;
+    case "cabs":
+      return <CabsStep />;
+    case "payment":
+      return (
+        <PaymentStep
+          selectedItems={selectedItems}
+          tripId={tripId || ''}
+          userId={(user?.id || (user as any)?._id)?.toString() || ''}
+          travelers={travelers} // We'll fix this below
+          getTripDuration={getTripDuration}
+          getTotalAmount={getTotalAmount}
+          onPaymentSuccess={(bookingId) => {
+            toast({
+              title: 'Payment Successful! 🎉',
+              description: 'Your booking has been confirmed',
+            });
+            // Navigate to success page
+            // router.push(`/booking/success?bookingId=${bookingId}`);
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 1500);
+          }}
+        />
+      );
+    default:
+      return <BookingConfirmation />;
+  }
+};
 
   const canProceed = () => {
     switch (bookingStep) {
@@ -1975,45 +2806,45 @@ const TravelBookingFlow = () => {
       <Footer />
 
       {showHotelOverlay && selectedHotelForOverlay && (
-  <HotelDetailsOverlay
-    isOpen={showHotelOverlay}
-    onClose={() => setShowHotelOverlay(false)}
-    hotelId={
-      selectedHotelForOverlay.hotelId || 
-      selectedHotelForOverlay.hotel_id || 
-      selectedHotelForOverlay.id ||
-      // Add other possible ID field names from your search API
-      selectedHotelForOverlay.property_id
-    }
-    checkInDate={bookingDetails.checkIn}
-    checkOutDate={bookingDetails.checkOut}
-    adults={tripData?.adults || 2}
-    children={tripData?.children || 0}
-    onSelect={(hotelDetails) => {
-      const nights = getTripDuration() - 1;
-      const totalPrice = Math.round(
-        parseFloat(
-          hotelDetails.pricing?.compositePriceBreakdown?.gross_amount_hotel_currency?.value?.toString() ||
-          hotelDetails.pricing?.productPriceBreakdown?.gross_amount_hotel_currency?.value?.toString() ||
-          "0"
-        )
-      );
+        <HotelDetailsOverlay
+          isOpen={showHotelOverlay}
+          onClose={() => setShowHotelOverlay(false)}
+          hotelId={
+            selectedHotelForOverlay.hotelId ||
+            selectedHotelForOverlay.hotel_id ||
+            selectedHotelForOverlay.id ||
+            // Add other possible ID field names from your search API
+            selectedHotelForOverlay.property_id
+          }
+          checkInDate={bookingDetails.checkIn}
+          checkOutDate={bookingDetails.checkOut}
+          adults={tripData?.adults || 2}
+          children={tripData?.children || 0}
+          onSelect={(hotelDetails) => {
+            const nights = getTripDuration() - 1;
+            const totalPrice = Math.round(
+              parseFloat(
+                hotelDetails.pricing?.compositePriceBreakdown?.gross_amount_hotel_currency?.value?.toString() ||
+                  hotelDetails.pricing?.productPriceBreakdown?.gross_amount_hotel_currency?.value?.toString() ||
+                  "0"
+              )
+            );
 
-      setSelectedItems({
-        ...selectedItems,
-        hotel: {
-          ...hotelDetails,
-          nights,
-          totalPrice,
-          hotelId: hotelDetails.hotelInfo?.hotelId,
-          hotelName: hotelDetails.hotelInfo?.hotelName,
-        },
-      });
-      setShowHotelOverlay(false);
-    }}
-    makeAuthenticatedApiRequest={makeAuthenticatedApiRequest}
-  />
-)}
+            setSelectedItems({
+              ...selectedItems,
+              hotel: {
+                ...hotelDetails,
+                nights,
+                totalPrice,
+                hotelId: hotelDetails.hotelInfo?.hotelId,
+                hotelName: hotelDetails.hotelInfo?.hotelName,
+              },
+            });
+            setShowHotelOverlay(false);
+          }}
+          makeAuthenticatedApiRequest={makeAuthenticatedApiRequest}
+        />
+      )}
     </div>
   );
 };

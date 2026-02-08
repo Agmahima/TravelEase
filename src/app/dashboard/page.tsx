@@ -25,6 +25,8 @@ import { Trip, TransportationBooking } from '@/types';
 
 const Dashboard = () => {
   const { user, isLoading: authLoading } = useAuth();
+  const token = localStorage.getItem("token");
+
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("upcoming");
   
@@ -53,9 +55,25 @@ const Dashboard = () => {
   }, [user, authLoading, router]);
   
   const { data: trips = [], isLoading: tripsLoading } = useQuery({
-    queryKey: ['http://localhost:5000/api/trips'],
-    queryFn: async () => [], // Replace with actual API call
-    initialData: [],
+    queryKey: ["trips"],
+    queryFn: async () => {
+      const token = localStorage.getItem("authToken");
+      console.log("token: ",token)
+
+      const res= await fetch("http://localhost:5000/api/trips", {
+        method: "GET",
+        headers: {
+        Authorization: `Bearer ${token}`, // ✅ JWT sent here
+        "Content-Type": "application/json",
+      },
+        credentials: "include"
+      });
+      if(!res.ok){
+        throw new Error ("Failed to fetch trips");
+      }
+      return res.json();
+    },
+    // initialData: [],
     enabled: !!user,
   });
   
@@ -65,13 +83,21 @@ const Dashboard = () => {
   });
   
   // Separate trips by status
-  const upcomingTrips = trips?.filter((trip: Trip) => 
-    new Date(trip.startDate) > new Date() || trip.status === 'upcoming'
-  );
+  // const upcomingTrips = trips?.filter((trip: Trip) => 
+  //   new Date(trip.startDate) > new Date() || trip.status === 'confirmed'
+  // );
+
+  const upcomingTrips = trips?.filter((trip: Trip) =>
+  trip.status === "confirmed" &&
+  new Date(trip.startDate) >= new Date()
+);
+
   
   const pastTrips = trips?.filter((trip: Trip) => 
     new Date(trip.startDate) < new Date() && trip.status !== 'upcoming'
   );
+
+  
   
   // Loading state
   if (authLoading) {
@@ -249,18 +275,24 @@ const TripCard = ({ trip, router, isPast = false }: TripCardProps) => {
   const endDate = parseISO(trip.endDate.toString());
   const formattedStartDate = format(startDate, 'MMM d, yyyy');
   const formattedEndDate = format(endDate, 'MMM d, yyyy');
-  
+  const mainDestination = trip.destinations[0]?.location;
+  const origin = trip.destinations?.[0]?.location;
+const finalDestination =
+  trip.destinations?.[trip.destinations.length - 1]?.location;
+
+
   // Calculate trip duration
   const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   
   return (
     <Card className="overflow-hidden">
       <div className="h-48 overflow-hidden relative">
-        <img 
-          src={`https://source.unsplash.com/featured/?${encodeURIComponent(trip.destination)},travel`}
-          alt={trip.destination}
-          className="w-full h-full object-cover"
-        />
+        <img
+  src={`https://source.unsplash.com/600x400/?${encodeURIComponent(mainDestination)}`}
+  alt={mainDestination}
+  className="w-full h-full object-cover"
+/>
+
         {!isPast && (
           <div className="absolute top-3 right-3">
             <Badge className="bg-primary text-white">Upcoming</Badge>
@@ -268,7 +300,7 @@ const TripCard = ({ trip, router, isPast = false }: TripCardProps) => {
         )}
       </div>
       <CardHeader>
-        <CardTitle>{trip.destination}</CardTitle>
+        <CardTitle>{origin} → {finalDestination}</CardTitle>
         <CardDescription className="flex items-center">
           <CalendarIcon className="mr-1 h-4 w-4" />
           {formattedStartDate} - {formattedEndDate} ({duration} {duration === 1 ? 'day' : 'days'})
@@ -277,7 +309,7 @@ const TripCard = ({ trip, router, isPast = false }: TripCardProps) => {
       <CardContent className="space-y-2">
         <div className="flex items-center text-sm text-gray-600">
           <MapPinIcon className="mr-1 h-4 w-4" />
-          <span>{trip.destination}</span>
+          <span>{origin} → {finalDestination}</span>
         </div>
         <div className="flex items-center text-sm text-gray-600">
           <Users className="mr-1 h-4 w-4" />

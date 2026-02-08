@@ -12,7 +12,10 @@ export interface Destination {
   export interface Trip {
     id: number;
     userId: number;
-    destination: string;
+    destinations: {
+    location: string;
+    daysToStay: number;
+  }[];
     startDate: string;
     endDate: string;
     adults: number;
@@ -111,3 +114,11 @@ export interface Destination {
     preferences?: string[];
   }
   
+  export interface CabType {
+  id: number;
+  name: string; // Mini, Sedan, SUV
+  capacity: number;
+  baseFare: number;
+  pricePerKm: number;
+  imageUrl: string;
+}
