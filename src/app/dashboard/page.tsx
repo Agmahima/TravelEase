@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Trip, TransportationBooking } from "@/types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BOOKING_API_URL, PAYMENTS_API_URL } from "@/lib/config";
 
 const CANCELLATION_REASONS = [
   "Change of plans",
@@ -81,7 +82,7 @@ const CancelBookingModel = ({open, booking,onClose, onSuccess}: CancelBookingMod
 
       // Step 1 — Cancel the booking
       const cancelRes = await fetch(
-        `http://localhost:5000/api/bookings/${booking.bookingId}/cancel`,
+       `${BOOKING_API_URL}/api/bookings/${booking.bookingId}/cancel`,
         {
           method: "POST",
           headers: {
@@ -298,7 +299,7 @@ const Dashboard = () => {
       const token = localStorage.getItem("authToken");
       console.log("token: ", token);
 
-      const res = await fetch("http://localhost:5000/api/trips", {
+      const res = await fetch(`${BOOKING_API_URL}/api/trips`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`, // ✅ JWT sent here
@@ -317,7 +318,7 @@ const Dashboard = () => {
 
   const { data: transportationBookings = [], isLoading: bookingsLoading } =
     useQuery<TransportationBooking[]>({
-      queryKey: ["http://localhost:5000/api/transportation-bookings"],
+      queryKey: [`${BOOKING_API_URL}/api/transportation-bookings`],
       enabled: !!user,
     });
 
@@ -325,7 +326,7 @@ const Dashboard = () => {
     queryKey: ["bookings"],
     queryFn: async () => {
       const token = localStorage.getItem("authToken");
-      const res = await fetch("http://localhost:5000/api/bookings", {
+      const res = await fetch(`${BOOKING_API_URL}/api/bookings`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

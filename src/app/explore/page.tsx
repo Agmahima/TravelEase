@@ -12,6 +12,7 @@ import { Destination } from '@/types';
 import { SearchIcon, X, Calendar, Users, Tag } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import { BOOKING_API_URL } from '@/lib/config';
 
 const Explore = () => {
 
@@ -57,7 +58,7 @@ const [searchParams, setSearchParams] = useState({
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   
   const { data: destinations, isLoading, error } = useQuery<Destination[]>({
-    queryKey: ['http://localhost:5000/api/destinations'],
+    queryKey: [`${BOOKING_API_URL}/api/destinations`],
   });
   
   useEffect(() => {

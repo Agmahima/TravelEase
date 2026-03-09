@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import DestinationCard from './DestinationCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BOOKING_API_URL } from '@/lib/config';
 
 const PopularDestinations = () => {
   const { data: destinations, isLoading, error } = useQuery<Array<{ id: string; [key: string]: any }>>({
-    queryKey: ['http://localhost:5000/api/destinations'],
+    queryKey: [`${BOOKING_API_URL}/api/destinations`],
   });
 
   if (error) {

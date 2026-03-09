@@ -35,6 +35,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import HotelDetailsOverlay from "@/components/HotelDetailsOverlay";
 import { da } from "date-fns/locale";
+import { BOOKING_API_URL, PAYMENTS_API_URL } from "@/lib/config";
 
 declare global {
   interface Window {
@@ -181,7 +182,7 @@ const mockCabs = [
     id: "c1",
     type: "Economy",
     vehicle: "Toyota Camry or similar",
-    price: 45,
+    price: 500,
     capacity: 4,
     features: ["AC", "GPS Navigation"],
   },
@@ -189,7 +190,7 @@ const mockCabs = [
     id: "c2",
     type: "Premium",
     vehicle: "Mercedes E-Class or similar",
-    price: 75,
+    price: 1000,
     capacity: 4,
     features: ["AC", "GPS Navigation", "WiFi", "Premium Audio"],
   },
@@ -485,7 +486,7 @@ const TravelBookingFlow = () => {
       options.body = JSON.stringify(data);
     }
 
-    const response = await fetch(`http://localhost:5000${url}`, options);
+    const response = await fetch(`${BOOKING_API_URL}${url}`, options);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -1089,7 +1090,7 @@ const TravelBookingFlow = () => {
       total += hotelPrice;
     }
     if (selectedItems.cab) {
-      const days = tripData?.itinerary?.totalDays || 2;
+      const days = getTripDuration();
       total += selectedItems.cab.price * days;
     }
     return Math.round(total);
@@ -1371,7 +1372,7 @@ const TravelBookingFlow = () => {
         console.log("👥 Sending travelers data:", travelersData);
 
         const response = await fetch(
-          "http://localhost:5000/api/flights/flight-booking",
+          `${BOOKING_API_URL}/api/flights/flight-booking`,
           {
             method: "POST",
             headers: {
@@ -1585,7 +1586,7 @@ const TravelBookingFlow = () => {
 
   // Replace the existing HotelsStep component with this updated version:
   const HotelsStep = () => {
-    const nights = getTripDuration() - 1;
+    const nights = getTripDuration();
 
     const handleHotelSelect = async (hotel: any) => {
       // If already selected, return
@@ -1599,7 +1600,7 @@ const TravelBookingFlow = () => {
         ? new Date(tripData.endDate).toISOString().split("T")[0]
         : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
 
-      const nights = getTripDuration() - 1;
+      const nights = getTripDuration() ;
       const pricePerNight =
   hotel.pricing?.total ||
   hotel.pricing?.base ||
@@ -1663,7 +1664,7 @@ const totalPrice = Math.round(pricePerNight * nights);
 
         // 🟢 Save selected hotel in backend (as draft booking)
         const response = await fetch(
-          "http://localhost:5000/api/hotels/bookings",
+         `${BOOKING_API_URL}/api/hotels/bookings`,
           {
             method: "POST",
             headers: {
@@ -2013,7 +2014,7 @@ const totalPrice = Math.round(pricePerNight * nights);
     };
 
     const response = await fetch(
-      "http://localhost:5000/api/transportation-bookings",
+      `${BOOKING_API_URL}/api/transportation-bookings`,
       {
         method: "POST",
         headers: {
@@ -2092,11 +2093,11 @@ const totalPrice = Math.round(pricePerNight * nights);
 
                 <div className="text-right">
                   <div className="text-2xl font-bold text-purple-600">
-                    ${cab.price}
+                    INR{cab.price}
                   </div>
                   <div className="text-xs text-gray-500">per day</div>
                   <div className="text-xs text-gray-500">
-                    Total: ${cab.price * days}
+                    Total: INR{cab.price * days}
                   </div>
                   <Button
                     className="mt-2"
@@ -2169,7 +2170,7 @@ const totalPrice = Math.round(pricePerNight * nights);
       phone: "",
     });
 
-    const nights = getTripDuration() - 1;
+    const nights = getTripDuration() ;
     const days = getTripDuration();
 
     // Load Razorpay SDK once when component mounts
@@ -2227,7 +2228,7 @@ const totalPrice = Math.round(pricePerNight * nights);
         console.log("🚀 FRONTEND SENDING AMOUNT:", getTotalAmount());
 
         const response = await fetch(
-          "http://localhost:5001/api/payment/initiate",
+          `${PAYMENTS_API_URL}/api/payment/initiate`,
           {
             method: "POST",
             headers: {
@@ -2313,7 +2314,7 @@ const totalPrice = Math.round(pricePerNight * nights);
         console.log("🔍 Verifying payment:", razorpayResponse);
 
         const response = await fetch(
-          "http://localhost:5001/api/payment/verify",
+          `${PAYMENTS_API_URL}/api/payment/verify`,
           {
             method: "POST",
             headers: {

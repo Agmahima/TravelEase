@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Hotel, Car, Plane } from 'lucide-react';
 // import { toast } from '@/components/ui/sonner';
 import { toast } from 'sonner';
+import { BOOKING_API_URL } from '@/lib/config';
 
 // Declare Razorpay on window
 declare global {
@@ -91,8 +92,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
       };
 
       console.log('Creating draft booking...', bookingData);
-
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch(`${BOOKING_API_URL}/api/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
