@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, addDays } from "date-fns";
@@ -14,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Suspense } from "react";
 import {
   Popover,
   PopoverContent,
@@ -49,7 +51,7 @@ interface User {
   __v?: number;
 }
 
-const TripPlanner = () => {
+const TripPlannerContent = () => {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -1069,5 +1071,11 @@ destination={
     </>
   );
 };
+
+const TripPlanner = () => (
+  <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
+    <TripPlannerContent />
+  </Suspense>
+);
 
 export default TripPlanner;

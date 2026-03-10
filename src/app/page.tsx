@@ -14,7 +14,7 @@
 //   return null; // Nothing will be rendered because of the redirect
 // }
 "use client";
-
+export const dynamic = 'force-dynamic';
 import { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';

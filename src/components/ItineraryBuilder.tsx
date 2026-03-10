@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'wouter';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ItineraryDay from './ItineraryDay';
 import { sampleItinerary } from '@/lib/mockData';

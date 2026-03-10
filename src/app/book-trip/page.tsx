@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { Suspense } from "react";
 import {
   Plane,
   Hotel,
@@ -188,7 +190,7 @@ const mockCabs = [
   },
 ];
 
-const TravelBookingFlow = () => {
+const TravelBookingPageComponent = () => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -2961,5 +2963,11 @@ const totalPrice = Math.round(pricePerNight * nights);
     </div>
   );
 };
+
+const TravelBookingFlow = () => (
+  <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
+    <TravelBookingPageComponent />
+  </Suspense>
+);
 
 export default TravelBookingFlow;

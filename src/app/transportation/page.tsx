@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, addDays, parseISO } from 'date-fns';

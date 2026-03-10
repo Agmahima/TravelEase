@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { Loader2, Sparkles, MapPin, Clock, DollarSign, RefreshCw, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

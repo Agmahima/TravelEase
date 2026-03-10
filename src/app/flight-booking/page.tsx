@@ -1,4 +1,6 @@
 "use client";
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -24,6 +26,7 @@ import {
   Utensils,
   ArrowLeft
 } from 'lucide-react';
+import { Suspense } from 'react';
 
 interface FlightOffer {
   id: string;
@@ -71,7 +74,7 @@ interface FlightOffer {
 }
 
 
-const FlightBookingPage = () => {
+const FlightBookingPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -756,5 +759,11 @@ const FlightBookingPage = () => {
     </div>
   );
 };
+
+const FlightBookingPage = () => (
+  <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
+    <FlightBookingPageContent />
+  </Suspense>
+);
 
 export default FlightBookingPage;
