@@ -13,28 +13,19 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Plane,
-  Train,
   Hotel,
   Car,
-  Calendar,
   Users,
   MapPin,
-  Clock,
   CreditCard,
   Check,
   ArrowRight,
   Star,
-  Wifi,
-  Coffee,
-  Utensils,
-  ChevronDown,
-  ChevronUp,
   Loader2,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import HotelDetailsOverlay from "@/components/HotelDetailsOverlay";
-import { da } from "date-fns/locale";
 import { BOOKING_API_URL, PAYMENTS_API_URL } from "@/lib/config";
 
 declare global {
@@ -734,18 +725,7 @@ const TravelBookingFlow = () => {
     return airlines[code] || code;
   };
 
-  interface DestinationSearchResult {
-    destId: string;
-    name: string;
-    label: string;
-    type: string;
-    country: string;
-    region?: string;
-    latitude?: number;
-    longitude?: number;
-    imageUrl?: string;
-    hotelCount?: number;
-  }
+
   const searchDestinationId = async (cityName: string) => {
     try {
       console.log("searching destination id for :", cityName);
@@ -755,20 +735,6 @@ const TravelBookingFlow = () => {
       );
       console.log("Destination search response :", result);
 
-      // if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
-      //   // Get the first city result (filter out hotels, landmarks, etc.)
-      //   const cityResult =
-      //     response.data.find(
-      //       (item: DestinationSearchResult) => item.type === "city"
-      //     ) || response.data[0];
-      //   console.log("🆔 Found destination:", cityResult);
-      //   console.log("🆔 Destination ID:", cityResult.destId);
-      //   return cityResult.destId;
-      // }
-
-      // console.log("❌ No destination ID found for:", cityName);
-
-      // return null;
       if (result.success && result.data.length > 0) {
         // ✅ Get the first supported destination
         const destination = result.data[0];
@@ -793,68 +759,6 @@ const TravelBookingFlow = () => {
       return null;
     }
   };
-
-  // const searchRealHotels = async (
-  //   cityName: string,
-  //   checkInDate: string,
-  //   checkOutDate: string
-  // ) => {
-  //   try {
-  //     // First, get the destination ID for the city
-  //     const destId = await searchDestinationId(cityName);
-  //     console.log("searchRealHotels - destination id:", destId);
-  //     if (!destId) {
-  //       throw new Error("Could not find destination ID for the city");
-  //     }
-
-  //     setDestinationId(destId);
-
-  //     // Then search for hotels using the destination ID
-  //     const params = new URLSearchParams({
-  //       dest_id: destId.toString(),
-  //       checkin_date: checkInDate,
-  //       checkout_date: checkOutDate,
-  //       adults: (tripData?.adults || 2).toString(),
-  //       room_qty: bookingDetails.rooms.toString(),
-  //     });
-
-  //     // Add children if any
-  //     if (tripData?.children && tripData.children > 0) {
-  //       params.append("children", tripData.children.toString());
-  //     }
-
-  //     const response = await makeAuthenticatedApiRequest(
-  //       "GET",
-  //       `/search?${params}`
-  //     );
-
-  //     console.log(response);
-  //     console.log("🏨 Response structure:", {
-  //       hasData: !!response.data,
-  //       hasHotels: !!(response.data && response.data.hotels),
-  //       hotelsLength:
-  //         response.data && response.data.hotels
-  //           ? response.data.hotels.length
-  //           : 0,
-  //     });
-
-  //     if (
-  //       response &&
-  //       response.data &&
-  //       response.data.hotels &&
-  //       Array.isArray(response.data.hotels)
-  //     ) {
-  //       console.log("🏨 Found hotels:", response.data.hotels.length);
-  //       return response.data.hotels;
-  //     }
-
-  //     console.log("❌ No hotels found in response");
-  //     return [];
-  //   } catch (error) {
-  //     console.error("Error fetching hotels:", error);
-  //     throw error;
-  //   }
-  // };
 
   const searchRealHotels = async (
     destinationName: string,
@@ -891,42 +795,7 @@ const TravelBookingFlow = () => {
     }
   };
 
-  // const getHotelDetails = async (
-  //   hotelId: string,
-  //   arrivalDate: string,
-  //   departureDate: string
-  // ) => {
-  //   try {
-  //     setIsLoadingHotelDetails(true);
 
-  //     const params = new URLSearchParams({
-  //       arrival_date: arrivalDate,
-  //       departure_date: departureDate,
-  //       adults: (tripData?.adults || 2).toString(),
-  //     });
-
-  //     if (tripData?.children && tripData.children > 0) {
-  //       params.append("children", tripData.children.toString());
-  //     }
-
-  //     const response = await makeAuthenticatedApiRequest(
-  //       "GET",
-  //       `/${hotelId}/details?${params}`
-  //     );
-
-  //     setHotelDetails(response);
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Error fetching hotel details:", error);
-  //     toast({
-  //       title: "Error loading hotel details",
-  //       description: "Unable to load hotel details. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setIsLoadingHotelDetails(false);
-  //   }
-  // };
 
   const getHotelDetails = async (offerId: string) => {
     try {
@@ -1037,13 +906,7 @@ const TravelBookingFlow = () => {
     );
   };
 
-  // Generate dynamic data based on trip
-  const generateHotels = () => {
-    if (!tripData?.destinations || tripData.destinations.length === 0)
-      return [];
-    const firstDestination = tripData.destinations[0].location;
-    return generateMockHotels(firstDestination);
-  };
+
 
   const stepConfig = {
     confirmation: { title: "Booking Confirmation", icon: Check },

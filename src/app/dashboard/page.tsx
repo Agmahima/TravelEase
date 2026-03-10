@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { Trip, TransportationBooking } from "@/types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BOOKING_API_URL, PAYMENTS_API_URL } from "@/lib/config";
+import { BOOKING_API_URL } from "@/lib/config";
 
 const CANCELLATION_REASONS = [
   "Change of plans",
@@ -251,7 +251,6 @@ const CancelBookingModel = ({open, booking,onClose, onSuccess}: CancelBookingMod
 
 const Dashboard = () => {
   const { user, isLoading: authLoading } = useAuth();
-  const token = localStorage.getItem("token");
 
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("upcoming");

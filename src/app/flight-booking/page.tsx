@@ -1,23 +1,18 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 // Removed Separator import as it is not found
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { 
   Plane, 
-  ArrowLeftRight, 
-  Clock, 
-  Calendar,
-  Users,
   Filter,
   SortAsc,
   MapPin,
@@ -142,19 +137,7 @@ const FlightBookingPage = () => {
     enabled: !!(searchForm.from && searchForm.to && searchForm.departureDate)
   });
   
-  // Airport search for autocomplete
-  const searchAirports = async (query: string): Promise<Airport[]> => {
-    if (query.length < 2) return [];
-    
-    try {
-      const response = await apiRequest('GET', `/api/flights/city-and-airport-search/${encodeURIComponent(query)}`);
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error('Error searching airports:', error);
-      return [];
-    }
-  };
+
   
   // Book flight mutation
   const bookFlightMutation = useMutation({
@@ -362,40 +345,6 @@ const FlightBookingPage = () => {
       return null;
     }
   };
-
-  const getCoordinatesBackup = async (cityName:string) => {
-    try {
-      // Using a different geocoding service as backup
-      const response = await fetch(
-        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(cityName)}&key=YOUR_OPENCAGE_API_KEY&limit=1`
-      );
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      
-      if (!data?.results || data.results.length === 0) {
-        return null;
-      }
-  
-      return {
-        lat: data.results[0].geometry.lat,
-        lng: data.results[0].geometry.lng
-      };
-  
-    } catch (error) {
-      console.error('Error with backup geocoding service:', error);
-      return null;
-    }
-  };
-  
-  // Function to validate if a string is likely an airport code
-  const isAirportCode = (str: string) => {
-    return /^[A-Z]{3}$/.test(str.toUpperCase());
-  };
-  
 
   
   const handleBookFlight = (flight: FlightOffer) => {

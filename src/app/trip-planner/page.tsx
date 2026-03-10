@@ -20,8 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { generateItinerary, Itinerary, Activity } from "@/lib/openai";
+import { Itinerary, Activity } from "@/lib/openai";
 import { DestinationStop, TransportationOption } from "../../../shared/schema";
 import {
   Calendar as CalendarIcon,
@@ -74,7 +73,7 @@ const TripPlanner = () => {
   const [travelStyle, setTravelStyle] = useState("");
   const [notes, setNotes] = useState("");
   const [transportationOptions, setTransportationOptions] = useState<TransportationOption[]>([]);
-  const [transportationMode, setTransportationMode] = useState<string>("");
+  // const [transportationMode, setTransportationMode] = useState<string>("");
   const [generatedItinerary, setGeneratedItinerary] = useState<Itinerary | null>(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(1);
   const [isGeneratingItinerary, setIsGeneratingItinerary] = useState(false);
