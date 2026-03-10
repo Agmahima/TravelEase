@@ -57,6 +57,7 @@ interface Activity {
   location?: string;
   cost?: string;
   category?: string;
+  
 }
 
 interface ItineraryDay {

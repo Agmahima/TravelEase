@@ -144,10 +144,9 @@ const Transportation = () => {
 
   // Helper function to get trip display name
   const getTripDisplayName = (trip: Trip) => {
-    if (trip.destination) return trip.destination;
-    if (trip.destinations && trip.destinations.length > 0) return trip.destinations[0];
-    return 'Trip';
-  };
+  if (trip.destinations && trip.destinations.length > 0) return trip.destinations[0].location;
+  return 'Trip';
+};
   
   const handleProceedToPayment = () => {
     // Validate dates
@@ -184,9 +183,9 @@ const Transportation = () => {
     // Pre-fill customer details from user if available
     if (user) {
       setCustomerDetails({
-        name: user.name || '',
+        name: user.fullName || '',
         email: user.email || '',
-        phone: user.phone || ''
+        phone:  ''
       });
     }
     

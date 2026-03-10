@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { 
   X, MapPin, Star, Wifi, Car, Utensils, Dumbbell, Users, 
-  Calendar, Clock, CreditCard, ChevronLeft, ChevronRight, Loader2,
-  Phone, Mail, Globe, Bed, Bath, Snowflake, Coffee, Shield, Camera
+  Calendar, Clock, ChevronLeft, ChevronRight, Loader2,
+ Bed,  Coffee,  Camera
 } from "lucide-react";
 
 // ✅ NEW: Updated interfaces for Amadeus data
@@ -15,7 +15,7 @@ interface AmadeusHotelDetails {
       state?: string;
       country?: string;
     };
-    contact?: {};
+    contact?:  Record<string, unknown>;
     amenities?: string[];
     photos?: string[]; // Google Places photos
     googleRating?: number;

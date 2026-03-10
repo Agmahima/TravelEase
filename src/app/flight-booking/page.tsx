@@ -70,12 +70,6 @@ interface FlightOffer {
   }>;
 }
 
-interface Airport {
-  iataCode: string;
-  name: string;
-  cityName: string;
-  countryName: string;
-}
 
 const FlightBookingPage = () => {
   const router = useRouter();
@@ -167,16 +161,19 @@ const FlightBookingPage = () => {
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("Flight booked successfully:", data);
+
       toast({
         title: "Flight booked successfully!",
         description: "Your flight has been booked. Check your email for confirmation.",
       });
       router.push('/dashboard');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const errMsg = (error as Error).message || "Booking failed";
       toast({
         title: "Booking failed",
-        description: error.message || "There was an error booking your flight.",
+        description: errMsg,
         variant: "destructive",
       });
     }

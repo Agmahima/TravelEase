@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 interface DriverCardProps {
   driver: Driver;
   onSelect?: (driver: Driver) => void;
+  isSelected?: boolean; 
 }
 
 const DriverCard = ({ driver, onSelect }: DriverCardProps) => {
