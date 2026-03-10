@@ -69,9 +69,9 @@ export interface Destination {
   title: string;
   description: string;
   location: string;
-  duration: string;
+  duration?: string;
   cost: string;
-  category: "morning" | "lunch" | "afternoon" | "evening" | "other";
+  category: string;
   booked: boolean;  // ADD THIS PROPERTY
 }
 
