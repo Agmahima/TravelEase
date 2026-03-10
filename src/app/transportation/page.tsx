@@ -19,7 +19,7 @@ import { drivers, vehicleTypes, serviceTypes } from '@/lib/mockData';
 import { Driver, Trip } from '@/types';
 import { Car, CalendarIcon, Search, MapPin, Loader2, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { BOOKING_API_URL } from '@/lib/config';
+import { BOOKING_API_URL, PAYMENTS_API_URL } from '@/lib/config';
 
 // Declare Razorpay on window
 declare global {
@@ -239,8 +239,8 @@ const Transportation = () => {
   const initiatePayment = async (bookingId: string) => {
     try {
       console.log('💳 Initiating payment for booking:', bookingId);
-      
-      const response = await fetch('http://localhost:5001/api/payment/initiate', {
+
+      const response = await fetch(`${PAYMENTS_API_URL}/api/payment/initiate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -322,7 +322,7 @@ const Transportation = () => {
     try {
       console.log('🔍 Verifying payment...');
       
-      const response = await fetch('http://localhost:5001/api/payment/verify', {
+      const response = await fetch(`${PAYMENTS_API_URL}/api/payment/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
