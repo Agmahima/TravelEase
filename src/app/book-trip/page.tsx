@@ -2172,7 +2172,11 @@ const totalPrice = Math.round(pricePerNight * nights);
     };
 
     // Verify payment
-    const verifyPayment = async (razorpayResponse: any, bookingId: string) => {
+    const verifyPayment = async (razorpayResponse: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}, bookingId: string) => {
       try {
         console.log("🔍 Verifying payment:", razorpayResponse);
 
@@ -2208,19 +2212,19 @@ const totalPrice = Math.round(pricePerNight * nights);
 
         // Call success callback
         onPaymentSuccess(bookingId);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("❌ Payment verification error:", error);
-        toast({
-          title: "Payment Verification Failed",
-          description: error.message || "Please contact support",
-          variant: "destructive",
-        });
+        const errMsg = (error as Error).message || "Payment verification failed";
+        toast({ title: "Test Failed", description: errMsg, variant: "destructive" });
         setLoading(false);
       }
     };
 
     // Open Razorpay checkout
-    const openRazorpayCheckout = (paymentData: any, bookingId: string) => {
+    const openRazorpayCheckout = (paymentData: {
+  key: string;
+  razorpayOrder: { id: string; amount: number; currency: string };
+}, bookingId: string) => {
       console.log("🚀 openRazorpayCheckout called");
       console.log("📦 Payment data received:", paymentData);
       console.log("🆔 Booking ID:", bookingId);
@@ -2260,7 +2264,11 @@ const totalPrice = Math.round(pricePerNight * nights);
         name: "Travel Booking",
         description: `Booking Payment - ${bookingId.substring(0, 8)}...`,
         image: "/logo.png", // Add your logo
-        handler: async (response: any) => {
+        handler: async (response:  {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}) => {
           console.log("✅ Payment handler called:", response);
           await verifyPayment(response, bookingId);
         },
@@ -2309,7 +2317,9 @@ const totalPrice = Math.round(pricePerNight * nights);
 
         console.log("✅ Razorpay instance created:", razorpay);
 
-        razorpay.on("payment.failed", function (response: any) {
+        razorpay.on("payment.failed", function (response:  {
+  error: { description: string };
+}) {
           console.error("❌ Payment failed event:", response.error);
           toast({
             title: "Payment Failed",
@@ -2323,12 +2333,12 @@ const totalPrice = Math.round(pricePerNight * nights);
         console.log("🎯 Calling razorpay.open()...");
         razorpay.open();
         console.log("✅ Razorpay.open() called successfully");
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("❌ Error in openRazorpayCheckout:", error);
-        console.error("❌ Error stack:", error.stack);
+        console.error("❌ Error stack:", (error as Error).stack);
         toast({
           title: "Error",
-          description: "Failed to open payment gateway: " + error.message,
+          description: "Failed to open payment gateway: " + (error as Error).message,
           variant: "destructive",
         });
         setLoading(false);
@@ -2423,23 +2433,8 @@ const totalPrice = Math.round(pricePerNight * nights);
       setLoading(true);
 
       try {
-        // Option 1: Try to create draft booking
-        // let bookingId = tripId;
-        let bookingId = localStorage.getItem("currentBookingId");
-
-        // try {
-        //   console.log('📝 Step 1: Attempting to create draft booking...');
-        //   bookingId = await createDraftBooking();
-        //   console.log('✅ Booking created:', bookingId);
-        // } catch (bookingError) {
-        //   // console.warn('⚠️ Could not create draft booking, using tripId instead:', bookingError.message);
-        //   console.log('🔄 Using tripId as bookingId:', tripId);
-
-        //   // Continue with tripId - don't fail here
-        //   if (!tripId) {
-        //     throw new Error('No trip ID available for payment');
-        //   }
-        // }
+       
+        const bookingId = localStorage.getItem("currentBookingId");
 
         if (!bookingId) {
           throw new Error("Booking ID not received and no tripId available");
@@ -2635,7 +2630,7 @@ const totalPrice = Math.round(pricePerNight * nights);
               {razorpayLoaded && (
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    💳 You'll be redirected to a secure Razorpay payment gateway
+                   {" 💳 You'll be redirected to a secure Razorpay payment gateway"}
                   </p>
                 </div>
               )}
@@ -2661,7 +2656,7 @@ const totalPrice = Math.round(pricePerNight * nights);
               </Button>
 
               <p className="text-xs text-gray-500 text-center">
-                By clicking "Pay", you agree to our terms and conditions
+                {'By clicking "Pay", you agree to our terms and conditions'}
               </p>
 
               {/* Debug Test Button - Remove in production */}
@@ -2687,7 +2682,11 @@ const totalPrice = Math.round(pricePerNight * nights);
                       currency: "INR",
                       name: "Test Payment",
                       description: "Testing Razorpay Integration",
-                      handler: function (response: any) {
+                      handler: function (response:{
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}) {
                         console.log("✅ Test payment success:", response);
                         toast({
                           title: "Test Successful",
