@@ -76,7 +76,7 @@ export const queryClient = new QueryClient({
 });
 
 // Base API URL
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env. NEXT_PUBLIC_BOOKING_API_URL || "http://localhost:5000";
 
 // Enhanced apiRequest function with JWT support
 export async function apiRequest(
