@@ -158,10 +158,10 @@ const TripPlannerContent = () => {
       if (authLoading) throw new Error("Authentication is still loading, please wait.");
 
       const dataForApi = {
-       destinations: tripData.destinations?.map((dest: any) => ({
-  location: dest.location,
-  daysToStay: dest.daysToStay,
-})) || [],
+        destinations: tripData.destinations?.map((dest: any) => ({
+          city: dest.location,
+          days: dest.daysToStay,
+        })) || [],
         startDate: tripData.startDate,
         endDate: tripData.endDate,
         adults: tripData.adults,
