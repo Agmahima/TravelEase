@@ -227,7 +227,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     try {
       console.log('Verifying payment...');
 
-      const response = await fetch('http://localhost:5001/api/payment/verify', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_PAYMENTS_API_URL}/api/payment/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
