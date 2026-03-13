@@ -418,6 +418,7 @@ const TripPlannerContent = () => {
       if (tripId) itineraryRequest.tripId = tripId;
 
       const response = await makeAuthenticatedApiRequest("POST", "/api/generate-itinerary", itineraryRequest);
+      console.log("Itinerary generation response:", response);
 
       const enhancedItinerary = { ...response, destinations: validDestinations, transportationOptions };
       setGeneratedItinerary(enhancedItinerary);
@@ -425,6 +426,7 @@ const TripPlannerContent = () => {
       if (tripId) {
         await updateTripMutation.mutateAsync({ id: tripId, data: { itinerary: enhancedItinerary } });
       }
+      console.log("Itinerary saved to backend with tripId:", tripId);
 
       setCurrentStep(3);
       toast({ title: "Itinerary Generated!", description: "Your personalized itinerary has been created." });
