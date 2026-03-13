@@ -422,13 +422,14 @@ const TripPlannerContent = () => {
 
       const enhancedItinerary = { ...response, destinations: validDestinations, transportationOptions };
       setGeneratedItinerary(enhancedItinerary);
+      setCurrentStep(3);
 
       if (tripId) {
         await updateTripMutation.mutateAsync({ id: tripId, data: { itinerary: enhancedItinerary } });
       }
       console.log("Itinerary saved to backend with tripId:", tripId);
 
-      setCurrentStep(3);
+      // setCurrentStep(3);
       toast({ title: "Itinerary Generated!", description: "Your personalized itinerary has been created." });
     } catch (error: any) {
       toast({ title: "Error generating itinerary", description: error.message || "There was a problem generating your itinerary.", variant: "destructive" });
