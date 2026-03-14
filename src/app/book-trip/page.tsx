@@ -1535,6 +1535,7 @@ const totalPrice = Math.round(pricePerNight * nights);
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              'Authorization': `Bearer ${token}`, 
             },
             body: JSON.stringify(payload),
             credentials: "include", // ✅ include session cookie
