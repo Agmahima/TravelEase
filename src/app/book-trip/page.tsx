@@ -1547,8 +1547,8 @@ const totalPrice = Math.round(pricePerNight * nights);
         if (response.ok && result.success) {
           console.log("✅ Hotel booking saved successfully:", result);
           localStorage.setItem("currentBookingId", result.data.parentBookingId);
-          setSelectedItems({
-            ...selectedItems,
+          setSelectedItems(prev=> ({...prev,
+            // ...selectedItems,
             hotel: {
               ...hotel,
               details,
@@ -1557,7 +1557,7 @@ const totalPrice = Math.round(pricePerNight * nights);
               status: "draft",
               hotelBookingId: result.data.hotelBookingId,
             },
-          });
+          }));
         } else {
           console.error("❌ Failed to save hotel booking:", result);
         }
