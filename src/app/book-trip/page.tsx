@@ -1057,7 +1057,7 @@ const TravelBookingPageComponent = () => {
                 <div>
                   <div className="flex items-center space-x-2">
                     <Plane className="h-5 w-5" />
-                    <span className="font-medium">Flights/Transportation</span>
+                    <span className=" text-sm md:text-base">Flights/Transportation</span>
                   </div>
                   <p className="text-sm text-gray-600">
                     Book transportation to your destinations
@@ -1126,7 +1126,7 @@ const TravelBookingPageComponent = () => {
           </Card>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg overflow-hidden">
           <h3 className="font-medium text-blue-900 mb-3">Your Trip Summary</h3>
           <div className="text-sm text-blue-800 space-y-2">
             <p>
@@ -1668,7 +1668,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                 } ${isLoadingThis ? "opacity-60" : ""}`}
               >
                 <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
+                  <div className="flex flex-col sm:flex-row items-start gap-4">
                     {/* Hotel Image */}
                     <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                       {hotel.mainPhoto ? (
@@ -1785,7 +1785,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                         </div>
 
                         {/* Price and Selection */}
-                        <div className="text-right ml-4">
+                        <div className="text-right ml-0 sm:ml-4 w-full sm:w-auto">
                           {hasDiscount && (
                             <div className="text-sm text-gray-500 line-through">
                               {currency} {Math.round(strikethroughPrice)}
@@ -1929,7 +1929,7 @@ const totalPrice = Math.round(pricePerNight * nights);
             }`}
           >
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center space-x-4">
                   <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
                     <Car className="h-8 w-8 text-gray-600" />
@@ -1958,7 +1958,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="text-left sm:text-right w-full sm:w-auto">
                   <div className="text-2xl font-bold text-purple-600">
                     INR{cab.price}
                   </div>
@@ -2785,8 +2785,8 @@ const totalPrice = Math.round(pricePerNight * nights);
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen bg-gray-50 p-3 md:p-4 overflow-x-hidden">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Trip Header */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold mb-2">Book Your Trip</h1>
@@ -2799,7 +2799,7 @@ const totalPrice = Math.round(pricePerNight * nights);
           {/* Progress Bar */}
           <Card className="mb-6">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between overflow-x-auto md:overflow-visible pb-1 md:pb-0 min-w-0">
                 {getBookingSteps().map((step, index) => {
                   const StepIcon =
                     stepConfig[step as keyof typeof stepConfig].icon;
@@ -2807,7 +2807,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                   const isCompleted = index < getCurrentStepIndex();
 
                   return (
-                    <div key={step} className="flex items-center">
+                    <div key={step} className="flex items-center flex-shrink-0">
                       <div
                         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
                           isActive
@@ -2818,12 +2818,12 @@ const totalPrice = Math.round(pricePerNight * nights);
                         }`}
                       >
                         <StepIcon className="h-5 w-5" />
-                        <span className="font-medium">
+                        <span className="font-medium whitespace-nowrap">
                           {stepConfig[step as keyof typeof stepConfig].title}
                         </span>
                       </div>
                       {index < getBookingSteps().length - 1 && (
-                        <ArrowRight className="h-4 w-4 text-gray-400 mx-2" />
+                        <ArrowRight className="h-4 w-4 text-gray-400 mx-2 flex-shrink-0" />
                       )}
                     </div>
                   );
@@ -2836,8 +2836,8 @@ const totalPrice = Math.round(pricePerNight * nights);
           <div className="mb-6">{renderStepContent()}</div>
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={handleBack}>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <Button variant="outline" onClick={handleBack} className="w-full sm:w-auto">
               {getCurrentStepIndex() === 0 ? "Back to Trip Planner" : "Back"}
             </Button>
 
