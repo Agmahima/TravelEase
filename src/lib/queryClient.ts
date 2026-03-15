@@ -59,6 +59,7 @@
 // lib/queryClient.ts
 // lib/queryClient.ts
 import { QueryClient } from "@tanstack/react-query";
+import { BOOKING_API_URL } from "./config";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,7 +77,7 @@ export const queryClient = new QueryClient({
 });
 
 // Base API URL
-const API_BASE = process.env. NEXT_PUBLIC_BOOKING_API_URL || "http://localhost:5000";
+const API_BASE = BOOKING_API_URL || "http://localhost:5000";
 
 // Enhanced apiRequest function with JWT support
 export async function apiRequest(
@@ -116,18 +117,19 @@ export async function apiRequest(
     // Handle token expiration
     if (response.status === 401 || response.status === 403) {
       // Clear invalid token
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("authToken");
-      }
+      // if (typeof window !== "undefined") {
+      //   localStorage.removeItem("authToken");
+      // }
       
-      // Clear query cache - use the correct endpoint
-      queryClient.setQueryData(["/api/auth/me"], null);
+      // // Clear query cache - use the correct endpoint
+      // queryClient.setQueryData(["/api/auth/me"], null);
       
-      // Redirect to login if not already on login/register pages
-      const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
-      if (currentPath !== "/login" && currentPath !== "/register") {
-        window.location.href = "/login";
-      }
+      // // Redirect to login if not already on login/register pages
+      // const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+      // if (currentPath !== "/login" && currentPath !== "/register") {
+      //   window.location.href = "/login";
+      // }
+      console.warn("Unauthorized request:", url);
     }
     
     return response;
