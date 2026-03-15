@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BOOKING_API_URL } from "@/lib/config";
+import DestinationAutocomplete from "@/components/DestinationAutocomplete";
 
 interface User {
   id?: string;
@@ -682,7 +683,7 @@ const TripPlannerContent = () => {
                           {destinations.map((dest, index) => (
                             <div key={index} className="flex items-center gap-2 p-3 border rounded-md">
                               <div className="flex-grow">
-                                <div className="relative">
+                                {/* <div className="relative">
                                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                   <Input
                                     placeholder="City, country or region"
@@ -690,7 +691,11 @@ const TripPlannerContent = () => {
                                     value={dest.location}
                                     onChange={(e) => handleUpdateDestination(index, 'location', e.target.value)}
                                   />
-                                </div>
+                                </div> */}
+                                <DestinationAutocomplete
+  value={dest.location}
+  onChange={(value) => handleUpdateDestination(index, 'location', value)}
+/>
                               </div>
                               <div className="w-24">
                                 <Input
@@ -717,7 +722,7 @@ const TripPlannerContent = () => {
                         <div className="flex items-end gap-2 p-3 border rounded-md border-dashed">
                           <div className="flex-grow">
                             <Label htmlFor="newDestination" className="mb-1 block text-xs">New Destination</Label>
-                            <div className="relative">
+                            {/* <div className="relative">
                               <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                               <Input
                                 id="newDestination"
@@ -726,7 +731,11 @@ const TripPlannerContent = () => {
                                 value={newDestination}
                                 onChange={(e) => setNewDestination(e.target.value)}
                               />
-                            </div>
+                            </div> */}
+                            <DestinationAutocomplete
+  value={newDestination}
+  onChange={(value) => setNewDestination(value)}
+/>
                           </div>
                           <div className="w-24">
                             <Input
