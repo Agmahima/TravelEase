@@ -18,7 +18,7 @@ const TransportationSection = () => {
   const [selectedVehicleType, setSelectedVehicleType] = useState("Standard");
   const [selectedServiceLevel, setSelectedServiceLevel] = useState("Standard Service");
   const [driverSearchQuery, setDriverSearchQuery] = useState("");
-  
+
   const filteredDrivers = drivers.filter(driver => {
     if (!driverSearchQuery) return true;
     const query = driverSearchQuery.toLowerCase();
@@ -30,170 +30,242 @@ const TransportationSection = () => {
   });
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section
+      className="py-20"
+      style={{ background: 'linear-gradient(180deg, #fff0f6 0%, #fdf4ff 100%)' }}
+    >
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Transportation Made Easy</h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">Book drivers for your entire trip duration or arrange individual transfers.</p>
+
+        {/* Header */}
+        <div className="text-center mb-14">
+         
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-4"
+            style={{
+              background: 'linear-gradient(135deg, #be185d, #a855f7)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            Transportation Made Easy
+          </h2>
+          <p className="text-lg text-pink-900/60 max-w-2xl mx-auto">
+            Book drivers for your entire trip duration or arrange individual transfers.
+          </p>
         </div>
-        
-        <div className="grid md:grid-cols-2 gap-10">
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="p-6">
-              <h3 className="text-2xl font-bold mb-4">Reserve Your Dedicated Driver</h3>
-              <p className="text-gray-600 mb-6">Have the same driver throughout your entire trip for a seamless experience.</p>
-              
+
+        <div className="grid md:grid-cols-2 gap-8">
+
+          {/* Left — Booking Form */}
+          <div className="bg-white rounded-2xl shadow-sm border border-pink-100 overflow-hidden">
+            {/* Card top border */}
+            <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #ec4899, #a855f7)' }} />
+
+            <div className="p-7">
+              <h3 className="text-xl font-bold text-pink-900 mb-1">Reserve Your Dedicated Driver</h3>
+              <p className="text-pink-800/60 text-sm mb-7">
+                Have the same driver throughout your entire trip for a seamless experience.
+              </p>
+
               <div className="space-y-6">
+
+                {/* Trip Duration */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trip Duration</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal relative pl-10"
-                          >
-                            <CalendarIcon className="absolute left-3 mr-8 top-3 h-4 w-4 text-gray-400 " />
-                            {tripStartDate ? format(tripStartDate, "PPP") : <span className="text-gray-400">Start date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={tripStartDate}
-                            onSelect={setTripStartDate}
-                            initialFocus
-                            disabled={(date) => date < new Date()}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="relative">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal relative pl-10"
-                          >
-                            <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                            {tripEndDate ? format(tripEndDate, "PPP") : <span className="text-gray-400">End date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={tripEndDate}
-                            onSelect={setTripEndDate}
-                            initialFocus
-                            disabled={(date) => !tripStartDate || date < tripStartDate}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                  <label className="block text-xs font-semibold text-pink-700 uppercase tracking-wide mb-2">
+                    Trip Duration
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Start Date */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-2 px-3 py-2.5 border border-pink-200 rounded-xl text-sm text-left bg-pink-50/50 hover:border-pink-400 transition-colors focus:outline-none focus:ring-2 focus:ring-pink-400">
+                          <CalendarIcon className="h-4 w-4 text-pink-400 flex-shrink-0" />
+                          <span className={tripStartDate ? 'text-pink-900' : 'text-gray-400'}>
+                            {tripStartDate ? format(tripStartDate, 'dd MMM yyyy') : 'Start date'}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={tripStartDate}
+                          onSelect={setTripStartDate}
+                          initialFocus
+                          disabled={(date) => date < new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* End Date */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-2 px-3 py-2.5 border border-pink-200 rounded-xl text-sm text-left bg-pink-50/50 hover:border-pink-400 transition-colors focus:outline-none focus:ring-2 focus:ring-pink-400">
+                          <CalendarIcon className="h-4 w-4 text-pink-400 flex-shrink-0" />
+                          <span className={tripEndDate ? 'text-pink-900' : 'text-gray-400'}>
+                            {tripEndDate ? format(tripEndDate, 'dd MMM yyyy') : 'End date'}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={tripEndDate}
+                          onSelect={setTripEndDate}
+                          initialFocus
+                          disabled={(date) => !tripStartDate || date < tripStartDate}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
-                
+
+                {/* Vehicle Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
+                  <label className="block text-xs font-semibold text-pink-700 uppercase tracking-wide mb-2">
+                    Vehicle Type
+                  </label>
                   <div className="grid grid-cols-3 gap-2">
                     {vehicleTypes.map((vehicle, index) => (
-                      <div 
-                        key={index} 
-                        className={`border rounded-lg p-3 cursor-pointer hover:border-primary text-center ${selectedVehicleType === vehicle.type ? 'border-primary bg-white bg-opacity-5' : ''}`}
+                      <div
+                        key={index}
                         onClick={() => setSelectedVehicleType(vehicle.type)}
+                        className={`border rounded-xl p-3 cursor-pointer text-center transition-all duration-200 ${
+                          selectedVehicleType === vehicle.type
+                            ? 'border-pink-400 bg-pink-50 shadow-sm'
+                            : 'border-pink-100 hover:border-pink-300'
+                        }`}
                       >
-                        <i className={`fas fa-${vehicle.icon} text-primary text-2xl mb-2`}></i>
-                        <p className="text-sm font-medium">{vehicle.type}</p>
-                        <p className="text-xs text-gray-500">{vehicle.capacity}</p>
+                        <i
+                          className={`fas fa-${vehicle.icon} text-xl mb-1.5`}
+                          style={{
+                            color: selectedVehicleType === vehicle.type ? '#ec4899' : '#c084fc',
+                          }}
+                        />
+                        <p className="text-xs font-semibold text-pink-900">{vehicle.type}</p>
+                        <p className="text-xs text-pink-400">{vehicle.capacity}</p>
                       </div>
                     ))}
                   </div>
                 </div>
-                
+
+                {/* Service Level */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Service Level</label>
-                  <div className="grid grid-cols-2 gap-4">
+                  <label className="block text-xs font-semibold text-pink-700 uppercase tracking-wide mb-2">
+                    Service Level
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
                     {serviceTypes.map((service, index) => (
-                      <div 
-                        key={index} 
-                        className={`border rounded-lg p-4 cursor-pointer hover:border-primary ${selectedServiceLevel === service.name ? 'border-primary bg-white bg-opacity-5' : ''}`}
+                      <div
+                        key={index}
                         onClick={() => setSelectedServiceLevel(service.name)}
+                        className={`border rounded-xl p-4 cursor-pointer transition-all duration-200 ${
+                          selectedServiceLevel === service.name
+                            ? 'border-pink-400 bg-pink-50 shadow-sm'
+                            : 'border-pink-100 hover:border-pink-300'
+                        }`}
                       >
                         <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-medium">{service.name}</h4>
-                          <div className="flex">
+                          <h4 className="font-semibold text-pink-900 text-sm">{service.name}</h4>
+                          <div className="flex gap-0.5">
                             {[...Array(5)].map((_, i) => (
-                              <i key={i} className={`fas fa-star ${i < service.rating ? 'text-accent' : 'text-gray-300'}`}></i>
+                              <i
+                                key={i}
+                                className="fas fa-star text-xs"
+                                style={{ color: i < service.rating ? '#f59e0b' : '#e5e7eb' }}
+                              />
                             ))}
                           </div>
                         </div>
-                        <ul className="text-sm text-gray-600 space-y-1 mb-2">
+                        <ul className="text-xs text-pink-800/70 space-y-1 mb-3">
                           {service.features.map((feature, i) => (
-                            <li key={i} className="flex items-center">
-                              <i className="fas fa-check text-primary text-xs mr-2"></i> {feature}
+                            <li key={i} className="flex items-center gap-1.5">
+                              <i className="fas fa-check text-pink-500 text-xs" />
+                              {feature}
                             </li>
                           ))}
                           {service.missing.map((feature, i) => (
-                            <li key={i} className="flex items-center">
-                              <i className="fas fa-times text-gray-400 text-xs mr-2"></i> {feature}
+                            <li key={i} className="flex items-center gap-1.5 opacity-40">
+                              <i className="fas fa-times text-gray-400 text-xs" />
+                              {feature}
                             </li>
                           ))}
                         </ul>
-                        <p className="font-medium">${service.price}<span className="text-sm font-normal text-gray-500">/day</span></p>
+                        <p className="font-bold text-pink-700 text-sm">
+                          ₹{service.price}
+                          <span className="text-xs font-normal text-pink-400">/day</span>
+                        </p>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-              
-              <Button className="mt-6 w-full bg-primary text-white py-6 rounded-lg hover:bg-opacity-90 transition font-medium">
+
+              <button
+                className="mt-6 w-full text-white py-3 rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #be185d, #ec4899, #a855f7)' }}
+              >
                 Check Driver Availability
-              </Button>
+              </button>
             </div>
           </div>
-          
-          <div className="relative">
-            <div className="bg-white rounded-xl shadow-md overflow-hidden h-full">
-              <div className="h-48 relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
-                  alt="Premium transportation" 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black opacity-60"></div>
-                <div className="absolute bottom-4 left-6 text-white">
-                  <h3 className="text-xl font-bold">Driver Profiles</h3>
-                  <p className="text-sm">Choose your preferred driver based on ratings and reviews</p>
-                </div>
+
+          {/* Right — Driver Profiles */}
+          <div className="bg-white rounded-2xl shadow-sm border border-pink-100 overflow-hidden flex flex-col">
+            {/* Hero image */}
+            <div className="h-48 relative flex-shrink-0">
+              <img
+                src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+                alt="Premium transportation"
+                className="w-full h-full object-cover"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(to top, rgba(190,24,93,0.85) 0%, rgba(168,85,247,0.4) 60%, transparent 100%)',
+                }}
+              />
+              <div className="absolute bottom-4 left-5 text-white">
+                <h3 className="text-lg font-bold">Driver Profiles</h3>
+                <p className="text-xs text-pink-200">Choose based on ratings, language & location</p>
               </div>
-              
-              <div className="p-6">
-                <div className="flex items-center mb-6">
-                  <Input
+            </div>
+
+            <div className="p-6 flex flex-col flex-1">
+              {/* Search */}
+              <div className="flex items-center gap-2 mb-5">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-pink-400" />
+                  <input
                     type="text"
                     placeholder="Search by name, language, or location"
-                    className="w-full border rounded-lg py-2 px-4 focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full pl-9 pr-3 py-2 border border-pink-200 rounded-xl text-sm bg-pink-50/50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
                     value={driverSearchQuery}
                     onChange={(e) => setDriverSearchQuery(e.target.value)}
                   />
-                  <Button className="ml-2 bg-primary text-white p-2 rounded-lg">
-                    <Search className="h-4 w-4" />
-                  </Button>
                 </div>
-                
-                <div className="space-y-4 max-h-64 overflow-y-auto scrollbar-hide">
-                  {filteredDrivers.map((driver) => (
-                    <DriverCard key={driver.id} driver={driver} />
-                  ))}
-                </div>
-                
-                <Button variant="outline" className="mt-6 w-full border border-primary text-primary py-2 rounded-lg hover:bg-primary hover:text-white transition font-medium">
-                  View All Drivers
-                </Button>
+                <button
+                  className="p-2.5 rounded-xl text-white flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #ec4899, #a855f7)' }}
+                >
+                  <Search className="h-4 w-4" />
+                </button>
               </div>
+
+              {/* Driver list */}
+              <div className="space-y-3 flex-1 max-h-64 overflow-y-auto pr-1">
+                {filteredDrivers.map((driver) => (
+                  <DriverCard key={driver.id} driver={driver} />
+                ))}
+              </div>
+
+              <button
+                className="mt-5 w-full py-2.5 rounded-xl text-sm font-semibold border-2 border-pink-300 text-pink-600 hover:bg-pink-50 transition-colors"
+              >
+                View All Drivers
+              </button>
             </div>
           </div>
+
         </div>
       </div>
     </section>

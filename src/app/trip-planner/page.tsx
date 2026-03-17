@@ -624,7 +624,7 @@ const TripPlannerContent = () => {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow bg-gray-50 flex items-center justify-center">
+        <main className="flex-grow bg-gray-50 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #fff0f6 0%, #fdf4ff 100%)' }}>
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
             <p>Loading...</p>
@@ -643,7 +643,7 @@ const TripPlannerContent = () => {
         <Header />
         <main className="flex-grow bg-gray-50">
           {/* Progress Steps */}
-          <div className="bg-white border-b">
+          <div className="bg-white border-b border-pink-100">
             <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between max-w-3xl mx-auto">
                 <div className={`flex flex-col items-center ${currentStep >= 1 ? 'text-primary' : 'text-gray-400'}`}>

@@ -1040,7 +1040,7 @@ const TravelBookingPageComponent = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card
             className={`cursor-pointer transition-all ${
-              selectedBookings.transportation ? "ring-2 ring-blue-500" : ""
+              selectedBookings.transportation ? "ring-2 ring-pink-500" : ""
             }`}
           >
             <CardContent className="p-4">
@@ -1069,7 +1069,7 @@ const TravelBookingPageComponent = () => {
 
           <Card
             className={`cursor-pointer transition-all ${
-              selectedBookings.hotels ? "ring-2 ring-blue-500" : ""
+              selectedBookings.hotels ? "ring-2 ring-pink-500" : ""
             }`}
           >
             <CardContent className="p-4">
@@ -1098,7 +1098,7 @@ const TravelBookingPageComponent = () => {
 
           <Card
             className={`cursor-pointer transition-all ${
-              selectedBookings.cabs ? "ring-2 ring-blue-500" : ""
+              selectedBookings.cabs ? "ring-2 ring-pink-500" : ""
             }`}
           >
             <CardContent className="p-4">
@@ -1126,9 +1126,9 @@ const TravelBookingPageComponent = () => {
           </Card>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg overflow-hidden">
-          <h3 className="font-medium text-blue-900 mb-3">Your Trip Summary</h3>
-          <div className="text-sm text-blue-800 space-y-2">
+        <div className="mt-6 p-4 rounded-lg overflow-hidden" style={{ background: 'linear-gradient(135deg, #fff0f6, #fdf4ff)' }}>
+          <h3 className="font-medium text-pink-900 mb-3">Your Trip Summary</h3>
+          <div className="text-sm text-pink-800 space-y-2">
             <p>
               <strong>Primary Destination:</strong>{" "}
               {tripData.itinerary?.destination || tripData.destination}
@@ -1178,7 +1178,7 @@ const TravelBookingPageComponent = () => {
           </div>
 
           {tripData.itinerary && tripData.itinerary.days.length > 0 && (
-            <div className="mt-4 p-3 bg-white rounded border">
+            <div className="mt-4 p-3 bg-white rounded border border-pink-100">
               <h4 className="font-medium mb-2">Sample Activities:</h4>
               <div className="text-xs text-gray-600">
                 {tripData.itinerary.days.slice(0, 2).map((day, index) => (
@@ -1596,11 +1596,11 @@ const totalPrice = Math.round(pricePerNight * nights);
         </div>
 
         {tripData?.destinations && tripData.destinations.length > 1 && (
-          <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-medium text-blue-800 mb-2">
+          <div className="mb-4 p-4 rounded-lg border border-pink-100" style={{ background: 'linear-gradient(135deg, #fff0f6, #fdf4ff)' }}>
+            <h3 className="font-medium text-pink-800 mb-2">
               Hotels for Each Destination
             </h3>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm text-pink-700">
               You'll need accommodation in each city. We're showing options for
               your primary destination:
             </p>
@@ -1925,7 +1925,7 @@ const totalPrice = Math.round(pricePerNight * nights);
           <Card
             key={cab.id}
             className={`cursor-pointer transition-all ${
-              selectedItems.cab?.id === cab.id ? "ring-2 ring-blue-500" : ""
+              selectedItems.cab?.id === cab.id ? "ring-2 ring-pink-500" : ""
             }`}
           >
             <CardContent className="p-6">
@@ -2811,7 +2811,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                       <div
                         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
                           isActive
-                            ? "bg-blue-100 text-blue-700"
+                            ? "bg-pink-100 text-pink-700"
                             : isCompleted
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-500"
@@ -2852,7 +2852,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                 <Button
                   onClick={handleNext}
                   disabled={!canProceed()}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-pink-600 hover:bg-pink-700"
                 >
                   Continue
                   <ArrowRight className="ml-2 h-4 w-4" />

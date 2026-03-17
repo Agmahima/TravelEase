@@ -91,23 +91,23 @@ export const drivers = [
 export const testimonials = [
   {
     rating: 5,
-    text: "The AI-generated itinerary was surprisingly spot-on with my preferences. It saved me hours of research, and the integrated booking system made everything so convenient!",
-    name: "Robert J.",
-    trip: "Trip to Japan",
+    text: "TravelEase made our Jaipur trip absolutely magical. The AI itinerary perfectly balanced the Amber Fort, City Palace, and local bazaars. Even found us a rooftop riad with views of Hawa Mahal!",
+    name: "Mahima Agrawal",
+    trip: "Jaipur Heritage Tour",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80"
   },
   {
     rating: 5,
-    text: "Having a dedicated driver for our entire trip in Italy was a game-changer. No worries about navigation or parking, and our driver was like a local guide giving us insider tips!",
-    name: "Emily C.",
-    trip: "Trip to Italy",
+    text: "Udaipur was a dream and TravelEase handled everything flawlessly — from a heritage hotel on Lake Pichola to a sunset boat ride past the Lake Palace. Every detail was perfectly planned.",
+    name: "Akshita Agrawal",
+    trip: "Udaipur Lake City Escape",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80"
   },
   {
     rating: 4.5,
-    text: "I was skeptical about an AI planning my honeymoon, but it was incredible! The suggestions were romantic and perfectly timed. And having everything in one app made the trip stress-free.",
-    name: "David & Sarah",
-    trip: "Honeymoon in Bali",
+    text: "Spotted a Bengal tiger on day one! TravelEase booked us the early morning zone 3 safari which our guide said was the best. The jungle lodge they picked was rustic, cozy, and perfect.Everything wasso amazing",
+    name: "Vansh Agarwal",
+    trip: "Ranthambore Wildlife Safari",
     image: "https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1298&q=80"
   }
 ];
@@ -136,101 +136,137 @@ export const serviceTypes = [
     rating: 3,
     features: ["City transportation", "Airport transfers"],
     missing: ["Guided tours"],
-    price: 49
+    price: 500
   },
   {
     name: "Premium Service",
     rating: 5,
     features: ["City transportation", "Airport transfers", "Guided tours"],
     missing: [],
-    price: 79
+    price: 1000
   }
 ];
 
 export const sampleItinerary = {
-  destination: "Paris",
+  destination: "Jaipur",
   days: [
     {
       day: 1,
-      date: "2023-09-05",
+      date: "2026-03-19",
       activities: [
         {
-          time: "9:00 AM - 12:00 PM",
-          title: "Louvre Museum Tour",
-          description: "Explore the world's largest art museum and historic monument.",
-          location: "Rue de Rivoli, 75001 Paris",
+          time: "7:00 AM - 10:30 AM",
+          title: "Amber Fort & Sheesh Mahal",
+          description: "Explore the majestic hilltop Amber Fort, ride an elephant up the cobbled path, and marvel at the mirror-studded Sheesh Mahal inside.",
+          location: "Devisinghpura, Amer, Jaipur",
           cost: "$25 per person",
           category: "morning",
           booked: true
         },
         {
-          time: "12:30 PM - 2:00 PM",
-          title: "Lunch at Café de Flore",
-          description: "Iconic café known for its famous clientele throughout history.",
-          location: "172 Bd Saint-Germain, 75006 Paris",
-          cost: "€30-50 per person",
-          category: "lunch",
-          booked: false
+          time: "11:00 AM - 12:30 PM",
+          title: "Jaigarh Fort Walk",
+          description: "Walk up to the imposing Jaigarh Fort overlooking Amber. Home to the world's largest cannon on wheels — Jaivana.",
+          location: "Devisinghpura, Amer, Jaipur",
+          cost: "$25 per person",
+          category: "morning",
+          booked: true
         },
         {
-          time: "2:30 PM - 5:30 PM",
-          title: "Eiffel Tower Visit",
-          description: "Ascend the iconic landmark for panoramic views of Paris.",
-          location: "Champ de Mars, 5 Avenue Anatole France",
-          cost: "$28 per person",
+          time: "1:00 PM - 2:30 PM",
+          title: "Lunch at Suvarna Mahal",
+          description: "Royal dining experience at the Rambagh Palace restaurant. Savor authentic Rajasthani thali with laal maas and dal baati churma.",
+          location: "Rambagh Palace, Bhawani Singh Rd, Jaipur",
+          cost: "$25 per person",
+          category: "lunch",
+          booked: true
+        },
+        {
+          time: "3:00 PM - 5:30 PM",
+          title: "City Palace & Chandra Mahal",
+          description: "Tour the stunning City Palace complex — a blend of Mughal and Rajput architecture. Don't miss the Diwan-i-Khas and the textile museum.",
+          location: "Tulsi Marg, Gangori Bazaar, Jaipur",
+          cost: "$25 per person",
           category: "afternoon",
           booked: true
         },
         {
-          time: "7:00 PM - 9:30 PM",
-          title: "Seine River Dinner Cruise",
-          description: "Enjoy Parisian cuisine while cruising past illuminated landmarks.",
-          location: "Port de la Bourdonnais",
-          cost: "$85 per person",
+          time: "6:00 PM - 7:00 PM",
+          title: "Hawa Mahal at Sunset",
+          description: "Watch the iconic Palace of Winds glow golden at sunset. Perfect photography spot from the rooftop café across the street.",
+          location: "Hawa Mahal Rd, Badi Choupad, Jaipur",
+          cost: "$25 per person",
           category: "evening",
-          booked: false
+          booked: true
+        },
+        {
+          time: "7:30 PM - 10:00 PM",
+          title: "Dinner & Folk Show at Chokhi Dhani",
+          description: "Immerse yourself in authentic Rajasthani culture — folk dance, puppet shows, camel rides, and a traditional village-style dinner.",
+          location: "Tonk Road, 20km from Jaipur",
+          cost: "$25 per person",
+          category: "evening",
+          booked: true
         }
       ]
     },
     {
       day: 2,
-      date: "2023-09-06",
+      date: "2026-03-20",
       activities: [
         {
-          time: "8:30 AM - 11:30 AM",
-          title: "Versailles Palace Tour",
-          description: "Visit the opulent royal residence with stunning gardens.",
-          location: "Place d'Armes, 78000 Versailles",
-          cost: "$42 per person",
+          time: "8:00 AM - 10:00 AM",
+          title: "Jantar Mantar Observatory",
+          description: "Explore the UNESCO World Heritage astronomical observatory built by Maharaja Jai Singh II. Witness the world's largest stone sundial.",
+          location: "Gangori Bazaar, J.D.A. Market, Jaipur",
+          cost: "$25 per person",
           category: "morning",
-          booked: false
+          booked: true
         },
         {
-          time: "12:30 PM - 2:00 PM",
-          title: "Lunch at La Petite Venise",
-          description: "French restaurant with garden views in Versailles.",
-          location: "10 Rue des Réservoirs, 78000 Versailles",
-          cost: "€35-55 per person",
+          time: "10:30 AM - 12:30 PM",
+          title: "Johari Bazaar & Gem Shopping",
+          description: "Stroll through Jaipur's famous jewellery market. Known as the gem capital of India — pick up precious stones, kundan jewellery, and bangles.",
+          location: "Johari Bazaar, Pink City, Jaipur",
+          cost: "$25 per person",
+          category: "morning",
+          booked: true
+        },
+        {
+          time: "1:00 PM - 2:30 PM",
+          title: "Lunch at 1135 AD",
+          description: "Dine in the royal ambience of Amber Fort's in-house restaurant. Medieval-era recipes reimagined with modern finesse.",
+          location: "Amer Fort, Devisinghpura, Jaipur",
+          cost: "$25 per person",
           category: "lunch",
-          booked: false
+          booked: true
         },
         {
-          time: "3:00 PM - 5:30 PM",
-          title: "Montmartre Walking Tour",
-          description: "Explore the artistic neighborhood and see Sacré-Cœur Basilica.",
-          location: "Montmartre, 75018 Paris",
-          cost: "$18 per person",
+          time: "3:00 PM - 5:00 PM",
+          title: "Nahargarh Fort & Sunset View",
+          description: "Drive up to Nahargarh Fort perched on the Aravalli Hills. Offers the most breathtaking panoramic view of the entire Pink City.",
+          location: "Krishna Nagar, Brahmapuri, Jaipur",
+          cost: "$25 per person",
           category: "afternoon",
           booked: true
         },
         {
-          time: "7:30 PM - 10:00 PM",
-          title: "Dinner and Show at Moulin Rouge",
-          description: "Experience the famous cabaret show with dinner.",
-          location: "82 Bd de Clichy, 75018 Paris",
-          cost: "$195 per person",
+          time: "5:30 PM - 7:00 PM",
+          title: "Block Printing Workshop — Sanganer",
+          description: "Visit a traditional block printing workshop in Sanganer village. Try your hand at stamping floral patterns on cotton fabric to take home.",
+          location: "Sanganer Village, Jaipur",
+          cost: "$25 per person",
+          category: "afternoon",
+          booked: true
+        },
+        {
+          time: "7:30 PM - 9:30 PM",
+          title: "Rooftop Dinner at Peacock Rooftop",
+          description: "End your Jaipur journey with candlelit rooftop dining, live sitar music, and a view of the illuminated Hawa Mahal glowing pink in the night.",
+          location: "Hotel Pearl Palace, Hari Kishan Somani Marg, Jaipur",
+          cost: "$25 per person",
           category: "evening",
-          booked: false
+          booked: true
         }
       ]
     }
