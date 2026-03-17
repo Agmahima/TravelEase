@@ -366,7 +366,7 @@ const TravelBookingPageComponent = () => {
           }
 
           const firstDestination = tripData.destinations[0].location;
-          const cityCode = await getCityCode(firstDestination);
+          // const cityCode = await getCityCode(firstDestination);
 
           const checkInDate = tripData.startDate
             ? new Date(tripData.startDate).toISOString().split("T")[0]
@@ -377,7 +377,7 @@ const TravelBookingPageComponent = () => {
             : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
 
           const hotels = await searchRealHotels(
-            cityCode,
+            firstDestination,  
             checkInDate,
             checkOutDate
           );
@@ -393,7 +393,7 @@ const TravelBookingPageComponent = () => {
                   tripId,
                   userId: user?.id,
                   searchParams: {
-                    destId: cityCode, // ✅ Changed from location to destId
+                    destId: firstDestination, // ✅ Changed from location to destId
                     destination: firstDestination, // ✅ Added destination city name
                     checkinDate: new Date(checkInDate), // ✅ Changed to checkinDate (lowercase 'i') and convert to Date
                     checkoutDate: new Date(checkOutDate),

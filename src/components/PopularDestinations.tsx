@@ -4,9 +4,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BOOKING_API_URL } from '@/lib/config';
 
 const PopularDestinations = () => {
-  const { data: destinations, isLoading, error } = useQuery<Array<{ id: string; [key: string]: any }>>({
-    queryKey: [`${BOOKING_API_URL}/api/destinations`],
-  });
+ const { data: destinations, isLoading, error } = useQuery<Array<{ id: string; [key: string]: any }>>({
+  queryKey: ['destinations'],
+  queryFn: async () => {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${BOOKING_API_URL}/api/destinations`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch destinations");
+    return response.json();
+  },
+  retry: false,
+  staleTime: 5 * 60 * 1000, // cache for 5 minutes
+});
 
   if (error) {
     return (
