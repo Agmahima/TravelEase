@@ -63,7 +63,7 @@ const SearchWidget = ({ onSearch, minimal = false }: SearchWidgetProps) => {
             <MapPin className="absolute left-3 top-3 text-gray-400 h-4 w-4" />
             <input 
               type="text" 
-              placeholder="City, country" 
+              placeholder="City" 
               className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
