@@ -54,9 +54,7 @@ const PopularDestinations = () => {
         {/* Header */}
         <div className="flex justify-between items-end mb-12">
           <div>
-            <span className="inline-block text-sm font-semibold text-pink-600 bg-pink-100 px-3 py-1 rounded-full mb-3">
-              Top Picks
-            </span>
+            
             <h2
               className="text-3xl md:text-4xl font-bold"
               style={{

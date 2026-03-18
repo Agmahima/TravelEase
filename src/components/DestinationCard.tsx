@@ -8,10 +8,9 @@ interface DestinationCardProps {
 const DestinationCard = ({ destination }: DestinationCardProps) => {
   const router = useRouter();
 
-  const handleExplore = () => {
-    // navigate(`/explore?destination=${encodeURIComponent(destination.name)}`);
-    router.push(`/explore?destination=${encodeURIComponent(destination.name)}`);
-  };
+ const handleExplore = () => {
+  router.push(`/trip-planner?destination=${encodeURIComponent(destination.name)}`);
+};
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition group">
@@ -37,7 +36,7 @@ const DestinationCard = ({ destination }: DestinationCardProps) => {
         </div>
         <p className="text-gray-600 mb-4">{destination.description}</p>
         <div className="flex justify-between items-center">
-          <span className="font-bold text-lg">${destination.pricePerPerson}<span className="text-sm font-normal text-gray-500">/person</span></span>
+          <span className="font-bold text-lg">₹{destination.pricePerPerson}<span className="text-sm font-normal text-gray-500">/person</span></span>
           <button 
             className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition"
             onClick={handleExplore}

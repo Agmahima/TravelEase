@@ -48,9 +48,7 @@ const ItineraryBuilder = ({ itinerary = sampleItinerary }: ItineraryBuilderProps
 
         {/* Header */}
         <div className="text-center mb-14">
-          <span className="inline-block text-sm font-semibold text-pink-600 bg-pink-100 px-3 py-1 rounded-full mb-3">
-            AI Itinerary Planner
-          </span>
+          
           <h2
             className="text-3xl md:text-4xl font-bold mb-4"
             style={{

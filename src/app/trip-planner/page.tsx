@@ -252,6 +252,14 @@ const TripPlannerContent = () => {
     }
   }, [user, authLoading, router]);
 
+  useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const destFromUrl = urlParams.get('destination');
+  if (destFromUrl) {
+    setDestinations([{ location: destFromUrl, daysToStay: 3 }]);
+  }
+}, []);
+
   const availablePreferences = [
     "Museums & Culture", "Outdoor Activities", "Food & Dining", "Shopping",
     "Historical Sites", "Beaches", "Adventure", "Relaxation",
