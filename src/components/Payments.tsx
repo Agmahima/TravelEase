@@ -77,7 +77,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
         },
         pricing: {
           totalAmount: getTotalAmount(),
-          currency: 'USD',
+          currency: 'INR',
           breakdown: {
             flights: selectedItems.flight?.price || 0,
             hotels: selectedItems.hotel ? selectedItems.hotel.price * nights : 0,
@@ -134,7 +134,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           bookingId,
           userId,
           amount: getTotalAmount(),
-          currency: 'USD',
+          currency: 'INR',
           paymentType: 'booking',
           customerDetails: {
             name: customerDetails.name,
@@ -146,19 +146,19 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
               serviceType: 'flight',
               serviceId: selectedItems.flight.id,
               allocatedAmount: selectedItems.flight.price,
-              currency: 'USD'
+              currency: 'INR'
             }] : []),
             ...(selectedItems.hotel ? [{
               serviceType: 'hotel',
               serviceId: selectedItems.hotel.id,
               allocatedAmount: selectedItems.hotel.price * nights,
-              currency: 'USD'
+              currency: 'INR'
             }] : []),
             ...(selectedItems.cab ? [{
               serviceType: 'cab',
               serviceId: selectedItems.cab.id,
               allocatedAmount: selectedItems.cab.price * days,
-              currency: 'USD'
+              currency: 'INR'
             }] : [])
           ]
         })
@@ -184,7 +184,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
    */
   const openRazorpayCheckout = (paymentData: any, bookingId: string) => {
     const options = {
-      key: process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx',
+      // key: process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx',
+      key:paymentData.key,
       amount: paymentData.razorpayOrder.amount,
       currency: paymentData.razorpayOrder.currency,
       order_id: paymentData.razorpayOrder.id,

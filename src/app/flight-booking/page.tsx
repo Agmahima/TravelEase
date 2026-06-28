@@ -123,7 +123,7 @@ const FlightBookingPageContent = () => {
         adults: searchForm.adults.toString(),
         ...(searchForm.children > 0 && { children: searchForm.children.toString() }),
         ...(searchForm.tripType === 'round-trip' && searchForm.returnDate && { returnDate: searchForm.returnDate }),
-        currencyCode: 'USD',
+        currencyCode: 'INR',
         max: '50'
       });
       

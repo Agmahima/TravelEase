@@ -1,5 +1,5 @@
 "use client";
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -59,7 +59,6 @@ interface Activity {
   location?: string;
   cost?: string;
   category?: string;
-  
 }
 
 interface ItineraryDay {
@@ -176,7 +175,7 @@ const mockCabs = [
     id: "c1",
     type: "Economy",
     vehicle: "Toyota Camry or similar",
-    price: 500,
+    price: 5,
     capacity: 4,
     features: ["AC", "GPS Navigation"],
   },
@@ -184,7 +183,7 @@ const mockCabs = [
     id: "c2",
     type: "Premium",
     vehicle: "Mercedes E-Class or similar",
-    price: 1000,
+    price: 10,
     capacity: 4,
     features: ["AC", "GPS Navigation", "WiFi", "Premium Audio"],
   },
@@ -245,6 +244,15 @@ const TravelBookingPageComponent = () => {
     string | null
   >(null);
 
+  const [hotelPage, setHotelPage] = useState(1);
+  const [hotelPagination, setHotelPagination] = useState({
+    totalResults: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+    limit: 20,
+  });
+
   const [travelers, setTravelers] = useState<any[]>([]);
 
   const token = localStorage.getItem("authToken");
@@ -254,7 +262,7 @@ const TravelBookingPageComponent = () => {
     queryFn: async () => {
       const response = await makeAuthenticatedApiRequest(
         "GET",
-        `/api/trips/${tripId}`
+        `/api/trips/${tripId}`,
       );
       return response;
     },
@@ -329,7 +337,7 @@ const TravelBookingPageComponent = () => {
                   children: tripData?.children || 0,
                 },
                 resultCount: flights.length,
-              }
+              },
             );
 
             if (saveResponse.success) {
@@ -352,84 +360,86 @@ const TravelBookingPageComponent = () => {
     }
   }, [bookingStep, selectedBookings.transportation, tripData]);
 
-  useEffect(() => {
-    if (
-      bookingStep === "hotels" &&
-      selectedBookings.hotels &&
-      realHotels.length === 0
-    ) {
-      const loadHotels = async () => {
-        setIsLoadingHotels(true);
-        try {
-          if (!tripData?.destinations || tripData.destinations.length === 0) {
-            throw new Error("No destinations found");
-          }
+  // useEffect(() => {
+  //   if (
+  //     bookingStep === "hotels" &&
+  //     selectedBookings.hotels &&
+  //     realHotels.length === 0
+  //   ) {
+  //     const loadHotels = async () => {
+  //       setIsLoadingHotels(true);
+  //       try {
+  //         if (!tripData?.destinations || tripData.destinations.length === 0) {
+  //           throw new Error("No destinations found");
+  //         }
 
-          const firstDestination = tripData.destinations[0].location;
-          // const cityCode = await getCityCode(firstDestination);
+  //         const firstDestination = tripData.destinations[0].location;
+  //         // const cityCode = await getCityCode(firstDestination);
 
-          const checkInDate = tripData.startDate
-            ? new Date(tripData.startDate).toISOString().split("T")[0]
-            : format(new Date(), "yyyy-MM-dd");
+  //         const checkInDate = tripData.startDate
+  //           ? new Date(tripData.startDate).toISOString().split("T")[0]
+  //           : format(new Date(), "yyyy-MM-dd");
 
-          const checkOutDate = tripData.endDate
-            ? new Date(tripData.endDate).toISOString().split("T")[0]
-            : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
+  //         const checkOutDate = tripData.endDate
+  //           ? new Date(tripData.endDate).toISOString().split("T")[0]
+  //           : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
 
-          const hotels = await searchRealHotels(
-            firstDestination,  
-            checkInDate,
-            checkOutDate
-          );
-          setRealHotels(hotels);
-          console.log("Loaded hotels:", hotels);
+  //         const hotels = await searchRealHotels(
+  //           firstDestination,
+  //           checkInDate,
+  //           checkOutDate,
+  //           hotelPage,
+  //           20,
+  //         );
+  //         setRealHotels(hotels);
+  //         console.log("Loaded hotels:", hotels);
 
-          if (hotels.length > 0) {
-            try {
-              const savedResponse = await makeAuthenticatedApiRequest(
-                "POST",
-                "/api/search-results/hotels/save",
-                {
-                  tripId,
-                  userId: user?.id,
-                  searchParams: {
-                    destId: firstDestination, // ✅ Changed from location to destId
-                    destination: firstDestination, // ✅ Added destination city name
-                    checkinDate: new Date(checkInDate), // ✅ Changed to checkinDate (lowercase 'i') and convert to Date
-                    checkoutDate: new Date(checkOutDate),
-                    adults: tripData?.adults || 2,
-                    children: tripData?.children || 0,
-                  },
-                  hotels,
-                }
-              );
+  //         if (hotels.length > 0) {
+  //           try {
+  //             const savedResponse = await makeAuthenticatedApiRequest(
+  //               "POST",
+  //               "/api/search-results/hotels/save",
+  //               {
+  //                 tripId,
+  //                 userId: user?.id,
+  //                 searchParams: {
+  //                   destId: firstDestination, // ✅ Changed from location to destId
+  //                   destination: firstDestination, // ✅ Added destination city name
+  //                   checkinDate: new Date(checkInDate), // ✅ Changed to checkinDate (lowercase 'i') and convert to Date
+  //                   checkoutDate: new Date(checkOutDate),
+  //                   adults: tripData?.adults || 2,
+  //                   children: tripData?.children || 0,
+  //                 },
+  //                 hotels,
+  //               },
+  //             );
 
-              if (savedResponse.success) {
-                setHotelSearchSessionId(savedResponse.searchSessionId);
-              }
-            } catch (err) {
-              console.error("Failed to save hotels:", err);
-            }
-          }
-        } catch (error) {
-          console.error("Error loading hotels:", error);
-          toast({
-            title: "Error loading hotels",
-            description: "Unable to load hotel data. Please try again.",
-            variant: "destructive",
-          });
-          // Fallback to mock data on error
-          const firstDestination =
-            tripData?.destinations?.[0]?.location || "City";
-          setRealHotels(generateMockHotels(firstDestination));
-        } finally {
-          setIsLoadingHotels(false);
-        }
-      };
+  //             if (savedResponse.success) {
+  //               setHotelSearchSessionId(savedResponse.searchSessionId);
+  //             }
+  //           } catch (err) {
+  //             console.error("Failed to save hotels:", err);
+  //           }
+  //         }
+  //       } catch (error) {
+  //         console.error("Error loading hotels:", error);
+  //         toast({
+  //           title: "Error loading hotels",
+  //           description: "Unable to load hotel data. Please try again.",
+  //           variant: "destructive",
+  //         });
+  //         // Fallback to mock data on error
+  //         const firstDestination =
+  //           tripData?.destinations?.[0]?.location || "City";
+  //         setRealHotels(generateMockHotels(firstDestination));
+  //       } finally {
+  //         setIsLoadingHotels(false);
+  //       }
+  //     };
 
-      loadHotels();
-    }
-  }, [bookingStep, selectedBookings.hotels, tripData]);
+  //     loadHotels();
+  //   }
+  // }, [bookingStep, selectedBookings.hotels, tripData]);
 
   // Add this useEffect after your other useEffects
   useEffect(() => {
@@ -448,7 +458,7 @@ const TravelBookingPageComponent = () => {
           name: index === 0 ? user.fullName : `Traveler ${index + 1}`,
           isLeadTraveler: index === 0,
           type: index < adultsCount ? "adult" : "child",
-        })
+        }),
       );
 
       setTravelers(travelersArray);
@@ -460,7 +470,7 @@ const TravelBookingPageComponent = () => {
   const makeAuthenticatedApiRequest = async (
     method: string,
     url: string,
-    data?: any
+    data?: any,
   ) => {
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -498,7 +508,7 @@ const TravelBookingPageComponent = () => {
       }
 
       throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
+        errorData.message || `HTTP error! status: ${response.status}`,
       );
     }
 
@@ -512,13 +522,13 @@ const TravelBookingPageComponent = () => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-          cityName
+          cityName,
         )}&format=json&limit=1&addressdetails=1`,
         {
           headers: {
             "User-Agent": "FlightBookingApp/1.0",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -558,7 +568,7 @@ const TravelBookingPageComponent = () => {
             Authorization: `Bearer ${amadeusAccessToken}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -574,7 +584,7 @@ const TravelBookingPageComponent = () => {
 
       const airports = data.data.filter(
         (location: { subType: string; iataCode: any }) =>
-          location.subType === "AIRPORT" && location.iataCode
+          location.subType === "AIRPORT" && location.iataCode,
       );
 
       if (airports.length === 0) {
@@ -584,7 +594,7 @@ const TravelBookingPageComponent = () => {
 
       const nearestAirport = airports[0];
       console.log(
-        `Nearest airport: ${nearestAirport.name} (${nearestAirport.iataCode})`
+        `Nearest airport: ${nearestAirport.name} (${nearestAirport.iataCode})`,
       );
 
       return nearestAirport.iataCode;
@@ -598,7 +608,7 @@ const TravelBookingPageComponent = () => {
     try {
       const response = await makeAuthenticatedApiRequest(
         "GET",
-        `/api/flights/city-and-airport-search/${encodeURIComponent(cityName)}`
+        `/api/flights/city-and-airport-search/${encodeURIComponent(cityName)}`,
       );
 
       if (response?.data?.[0]?.iataCode) {
@@ -679,7 +689,7 @@ const TravelBookingPageComponent = () => {
 
       const response = await makeAuthenticatedApiRequest(
         "GET",
-        `/api/flights/flight-search?${params}`
+        `/api/flights/flight-search?${params}`,
       );
 
       console.log("Flight search response:", response);
@@ -728,13 +738,12 @@ const TravelBookingPageComponent = () => {
     return airlines[code] || code;
   };
 
-
   const searchDestinationId = async (cityName: string) => {
     try {
       console.log("searching destination id for :", cityName);
       const result = await makeAuthenticatedApiRequest(
         "GET",
-        `/api/hotels/search-destinations?query=${encodeURIComponent(cityName)}`
+        `/api/hotels/search-destinations?query=${encodeURIComponent(cityName)}`,
       );
       console.log("Destination search response :", result);
 
@@ -747,13 +756,23 @@ const TravelBookingPageComponent = () => {
         const cityCode = destination.cityCode;
         console.log("🆔 City Code:", cityCode);
 
-        if (!cityCode) {
+        const regionId = destination.regionId;
+        console.log("🆔 Region ID:", regionId);
+
+        if (!regionId) {
           throw new Error(
-            `City code not found for ${cityName}. This city may not be supported.`
+            `Region ID not found for ${cityName}. This city may not be supported.`,
           );
         }
+        return regionId;
 
-        return cityCode; // ✅ Return IATA code, not placeId
+        // if (!cityCode) {
+        //   throw new Error(
+        //     `City code not found for ${cityName}. This city may not be supported.`
+        //   );
+        // }
+
+        // return cityCode; // ✅ Return IATA code, not placeId
       }
 
       throw new Error(`No results found for ${cityName}`);
@@ -766,30 +785,51 @@ const TravelBookingPageComponent = () => {
   const searchRealHotels = async (
     destinationName: string,
     checkIn: string,
-    checkOut: string
+    checkOut: string,
+    page: number = 1,
+    limit: number = 20,
   ) => {
     try {
       setIsLoadingHotels(true);
 
-      const cityCode = await searchDestinationId(destinationName);
-      if (!cityCode) {
-        throw new Error("Could not find city code for the destination");
+      // const cityCode = await searchDestinationId(destinationName);
+      // if (!cityCode) {
+      //   throw new Error("Could not find city code for the destination");
+      // }
+
+      const regionId = await searchDestinationId(destinationName);
+      if (!regionId) {
+        throw new Error("Could not find region ID for the destination");
       }
 
+      // const result = await makeAuthenticatedApiRequest(
+      //   "GET",
+      //   `/api/hotels/google-hotels/search?destination=${encodeURIComponent(destinationName)}&checkInDate=${checkIn}&checkOutDate=${checkOut}&adults=${tripData?.adults || 2}`
+      // );
       const result = await makeAuthenticatedApiRequest(
         "GET",
-        `/api/hotels/search?cityCode=${cityCode}&checkInDate=${checkIn}&checkOutDate=${checkOut}&adults=${
-          tripData?.adults || 2
-        }&rooms=1`
+        `/api/hotels/search?regionId=${encodeURIComponent(regionId)}&checkInDate=${checkIn}&checkOutDate=${checkOut}&adults=${tripData?.adults || 2}&currency=USD&page=${page}&limit=${limit}`,
       );
 
       console.log("Hotels search result:", result);
 
-      if (result.success && result.data?.hotels) {
-        return result.data.hotels;
+      // if (result.success && result.data?.hotels) {
+      //   return result.data.hotels;
+      // }
+      if (result.success && result.data) {
+        return result.data;
       }
 
-      return [];
+      // return [];
+      return {
+        hotels: [],
+        totalResults: 0,
+        page: 1,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit,
+      };
     } catch (error) {
       console.error("Error fetching hotels:", error);
       throw error;
@@ -798,21 +838,23 @@ const TravelBookingPageComponent = () => {
     }
   };
 
-
-
-  const getHotelDetails = async (offerId: string) => {
+  const getHotelDetails = async (hotelId: string) => {
     try {
       setIsLoadingHotelDetails(true);
 
       // ✅ Amadeus uses offerId, not hotel_id + dates
       // The offer already contains all booking details (dates, guests, pricing)
-      const params = new URLSearchParams({
-        offerId: offerId,
-      });
+      // const params = new URLSearchParams({
+      //   offerId: offerId,
+      // });
 
+      // const response = await makeAuthenticatedApiRequest(
+      //   "GET",
+      //   `/api/hotels/details?offerId=${offerId}` // ✅ Changed endpoint
+      // );
       const response = await makeAuthenticatedApiRequest(
         "GET",
-        `/api/hotels/details?offerId=${offerId}` // ✅ Changed endpoint
+        `/api/hotels/details?hotelId=${hotelId}`,
       );
 
       setHotelDetails(response);
@@ -831,11 +873,7 @@ const TravelBookingPageComponent = () => {
   };
   // Replace the existing useEffect for loading hotels with this:
   useEffect(() => {
-    if (
-      bookingStep === "hotels" &&
-      selectedBookings.hotels &&
-      realHotels.length === 0
-    ) {
+    if (bookingStep === "hotels" && selectedBookings.hotels) {
       const loadHotels = async () => {
         setIsLoadingHotels(true);
         try {
@@ -853,12 +891,27 @@ const TravelBookingPageComponent = () => {
             ? new Date(tripData.endDate).toISOString().split("T")[0]
             : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
 
-          const hotels = await searchRealHotels(
+          const hotelResponse = await searchRealHotels(
             firstDestination,
             checkInDate,
-            checkOutDate
+            checkOutDate,
+            hotelPage,
+            20,
           );
-          setRealHotels(hotels);
+
+          console.log("HOTEL RESPONSE USED FOR STATE:", hotelResponse);
+
+          // setRealHotels(hotelResponse.hotels || []);
+          setRealHotels(
+            Array.isArray(hotelResponse.hotels) ? hotelResponse.hotels : [],
+          );
+          setHotelPagination({
+            totalResults: hotelResponse.totalResults || 0,
+            totalPages: hotelResponse.totalPages || 0,
+            hasNextPage: hotelResponse.hasNextPage || false,
+            hasPrevPage: hotelResponse.hasPrevPage || false,
+            limit: hotelResponse.limit || 20,
+          });
         } catch (error) {
           console.error("Error loading hotels:", error);
           toast({
@@ -868,6 +921,13 @@ const TravelBookingPageComponent = () => {
           });
           // Fallback to empty array on error
           setRealHotels([]);
+          setHotelPagination({
+            totalResults: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+            limit: 20,
+          });
         } finally {
           setIsLoadingHotels(false);
         }
@@ -875,7 +935,21 @@ const TravelBookingPageComponent = () => {
 
       loadHotels();
     }
-  }, [bookingStep, selectedBookings.hotels, tripData]);
+  }, [bookingStep, selectedBookings.hotels, tripData, hotelPage]);
+
+  useEffect(() => {
+    setHotelPage(1);
+  }, [
+    tripData?.destinations?.[0]?.location,
+    tripData?.startDate,
+    tripData?.endDate,
+  ]);
+
+  useEffect(() => {
+    if (bookingStep === "hotels") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [hotelPage, bookingStep]);
 
   const getCityCode = async (cityName: string) => {
     // You might want to create a mapping or use a geocoding service
@@ -908,8 +982,6 @@ const TravelBookingPageComponent = () => {
       cityCodeMap[normalizedCity] || cityName.substring(0, 3).toUpperCase()
     );
   };
-
-
 
   const stepConfig = {
     confirmation: { title: "Booking Confirmation", icon: Check },
@@ -967,7 +1039,7 @@ const TravelBookingPageComponent = () => {
       const start = new Date(tripData.startDate);
       const end = new Date(tripData.endDate);
       return Math.ceil(
-        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
       );
     }
     return tripData?.itinerary?.totalDays || 2;
@@ -1057,7 +1129,9 @@ const TravelBookingPageComponent = () => {
                 <div>
                   <div className="flex items-center space-x-2">
                     <Plane className="h-5 w-5" />
-                    <span className=" text-sm md:text-base">Flights/Transportation</span>
+                    <span className=" text-sm md:text-base">
+                      Flights/Transportation
+                    </span>
                   </div>
                   <p className="text-sm text-gray-600">
                     Book transportation to your destinations
@@ -1126,7 +1200,10 @@ const TravelBookingPageComponent = () => {
           </Card>
         </div>
 
-        <div className="mt-6 p-4 rounded-lg overflow-hidden" style={{ background: 'linear-gradient(135deg, #fff0f6, #fdf4ff)' }}>
+        <div
+          className="mt-6 p-4 rounded-lg overflow-hidden"
+          style={{ background: "linear-gradient(135deg, #fff0f6, #fdf4ff)" }}
+        >
           <h3 className="font-medium text-pink-900 mb-3">Your Trip Summary</h3>
           <div className="text-sm text-pink-800 space-y-2">
             <p>
@@ -1206,7 +1283,7 @@ const TravelBookingPageComponent = () => {
 
         // Calculate total price for all travelers
         const pricePerPerson = parseFloat(
-          flight.price?.total || flight.price || 0
+          flight.price?.total || flight.price || 0,
         );
         const totalTravelers =
           travelers.length || bookingDetails.travelers || 1;
@@ -1259,7 +1336,7 @@ const TravelBookingPageComponent = () => {
               totalPrice: totalFlightPrice,
               pricePerPerson,
             }),
-          }
+          },
         );
         //     const travelersList = travelers.map((traveler, index) => ({
         //   travelerId: traveler._id || traveler.id || currentUserId,
@@ -1454,6 +1531,12 @@ const TravelBookingPageComponent = () => {
   const HotelsStep = () => {
     const nights = getTripDuration();
 
+    console.log("HOTEL PAGINATION DEBUG:", {
+      hotelPage,
+      hotelPagination,
+      realHotelsCount: realHotels.length,
+    });
+
     const handleHotelSelect = async (hotel: any) => {
       // If already selected, return
       if (selectedItems.hotel?.hotelId === hotel.hotelId) return;
@@ -1466,103 +1549,154 @@ const TravelBookingPageComponent = () => {
         ? new Date(tripData.endDate).toISOString().split("T")[0]
         : format(addDays(new Date(), getTripDuration()), "yyyy-MM-dd");
 
-      const nights = getTripDuration() ;
-      const pricePerNight =
-  hotel.pricing?.total ||
-  hotel.pricing?.base ||
-  0;
+      const nights = getTripDuration();
+const hotelTotal = hotel.pricing?.total || hotel.pricing?.base || 0;
 
-const totalPrice = Math.round(pricePerNight * nights);
+      // const totalPrice = Math.round(pricePerNight * nights);
+      const totalPrice = Math.round(hotelTotal);
+
+
 
       try {
         setSelectedHotelForDetails(hotel);
 
-        const details = await getHotelDetails(hotel.offerId); // ✅ Changed
+        // const details = await getHotelDetails(hotel.offerId);
+        const details = await getHotelDetails(hotel.hotelId); // ✅ Get details using hotelId
+
+        const leadTravelerId = user?.id || (user as any)?._id;
+
+        if (!leadTravelerId) {
+          toast({
+            title: "Missing user information",
+            description: "Please log in again before booking a hotel.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("HOTEL OBJECT:", hotel);
+console.log("hotelId before payload:", hotel.hotelId);
+console.log("hid before payload:", hotel.hid);
+console.log("supplierCurrency before payload:", hotel.pricing?.supplierCurrency);
+
 
         // Prepare payload to send to backend
         const payload = {
           tripId,
-          userId: user?.id,
-          offerId: hotel.offerId,
+  userId: user?.id || (user as any)?._id,
+  offerId: hotel.offerId || hotel.hotelId,
+  supplierCurrency: hotel.pricing?.supplierCurrency || "USD",
+
+
           hotelDetails: {
             hotelId: hotel.hotelId,
+              hid: hotel.hid || null,
+
             hotelName: hotel.hotelName,
             address: hotel.address,
             starRating: hotel.starRating,
             propertyType: hotel.propertyType,
           },
           stayDetails: {
-            searchParams: {
-              roomQuantity: 1,
-              adults: 2,
-              children: 0,
-              checkIn: checkInDate,
-              checkOut: checkOutDate,
-            },
-
             checkIn: checkInDate,
             checkOut: checkOutDate,
             nights,
+            searchParams: {
+              roomQuantity: 1,
+              adults: tripData?.adults || 1,
+              children: tripData?.children || 0,
+            },
             rooms: [
               {
-                roomType: details?.roomType || "Standard",
-                assignedTravelers: [], // will be updated later
-                occupancy: { adults: 2, children: 0 },
+                roomType: hotel.room?.type || "Standard Room",
+                roomName: hotel.room?.description || "",
+                assignedTravelers: [],
+                occupancy: {
+                  adults: tripData?.adults || 1,
+                  children: tripData?.children || 0,
+                },
               },
             ],
           },
           leadGuest: {
-            travelerId: tripData._id, // ✅ Add this if available
+            travelerId: leadTravelerId,
+            firstName: user?.fullName?.split(" ")[0] || "",
+            lastName: user?.fullName?.split(" ").slice(1).join(" ") || "",
+            email: user?.email || "",
           },
+          // pricing: {
+          //   basePrice: pricePerNight,
+          //   totalPrice: totalPrice,
+          //   currency: hotel.pricing?.currency || "INR",
+          // },
           pricing: {
-  basePrice: pricePerNight,
-  totalPrice: totalPrice,
-  currency: hotel.pricing?.currency || "INR",
-},
-          apiDetails: {
-            hotelId: hotel.id || hotel.hotelId,
-            provider: "Amadeus",
+            basePrice: hotel.pricing?.base || hotel.pricing?.total || 0,
+            totalPrice,
+            currency: hotel.pricing?.currency || "INR",
           },
+          // apiDetails: {
+          //   hotelId: hotel.id || hotel.hotelId,
+          //   provider: "Ratehawk",
+          // },
 
           specialRequests: "",
           additionalServices: [],
         };
 
         // 🟢 Save selected hotel in backend (as draft booking)
-        const response = await fetch(
-         `${BOOKING_API_URL}/api/hotels/bookings`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              'Authorization': `Bearer ${token}`, 
-            },
-            body: JSON.stringify(payload),
-            credentials: "include", // ✅ include session cookie
-          }
-        );
+        const response = await fetch(`${BOOKING_API_URL}/api/hotels/bookings`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+          credentials: "include", // ✅ include session cookie
+        });
 
         const result = await response.json();
 
         if (response.ok && result.success) {
           console.log("✅ Hotel booking saved successfully:", result);
           localStorage.setItem("currentBookingId", result.data.parentBookingId);
-          setSelectedItems(prev=> ({...prev,
-            // ...selectedItems,
-            hotel: {
-              ...hotel,
-              details,
-              nights,
-              totalPrice: Math.round(pricePerNight * nights),
-              status: "draft",
-              hotelBookingId: result.data.hotelBookingId,
-            },
-          }));
+          console.log("HOTEL DRAFT RESPONSE:", result);
+
+          setSelectedItems((prev) => ({
+  ...prev,
+  hotel: {
+    ...hotel,
+    details,
+    nights,
+    totalPrice,
+    status: "draft",
+    hotelBookingId: result.data.hotelBookingId,
+    bookHash: result.data.bookHash || null,
+    prebookKey: null,
+  },
+}));
+
+          console.log("SELECTED HOTEL AFTER DRAFT SAVE:", {
+            hotelBookingId: result.data.hotelBookingId,
+            parentBookingId: result.data.parentBookingId,
+            hotel,
+          });
+          console.log("SELECTED HOTEL FULL OBJECT:", hotel);
+          console.log("BOOK HASH:", hotel.bookHash);
         } else {
           console.error("❌ Failed to save hotel booking:", result);
+          toast({
+    title: "Hotel selection failed",
+    description: result.message || "Could not create hotel draft booking.",
+    variant: "destructive",
+  });
         }
-      } catch (error) {
+      } catch (error:any) {
         console.error("❌ Error selecting hotel:", error);
+        toast({
+    title: "Hotel selection failed",
+    description: error?.message || "Something went wrong while selecting hotel.",
+    variant: "destructive",
+  });
       }
     };
 
@@ -1591,12 +1725,18 @@ const totalPrice = Math.round(pricePerNight * nights);
             <span>
               {nights} nights, {bookingDetails.travelers} guests
             </span>
-            <Badge variant="outline">{realHotels.length} hotels found</Badge>
+            <Badge variant="outline">
+              {" "}
+              {hotelPagination.totalResults} hotels found
+            </Badge>
           </div>
         </div>
 
         {tripData?.destinations && tripData.destinations.length > 1 && (
-          <div className="mb-4 p-4 rounded-lg border border-pink-100" style={{ background: 'linear-gradient(135deg, #fff0f6, #fdf4ff)' }}>
+          <div
+            className="mb-4 p-4 rounded-lg border border-pink-100"
+            style={{ background: "linear-gradient(135deg, #fff0f6, #fdf4ff)" }}
+          >
             <h3 className="font-medium text-pink-800 mb-2">
               Hotels for Each Destination
             </h3>
@@ -1610,7 +1750,7 @@ const totalPrice = Math.round(pricePerNight * nights);
           </div>
         )}
 
-        {realHotels.length === 0 ? (
+        {!Array.isArray(realHotels) || realHotels.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Hotel className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -1624,7 +1764,7 @@ const totalPrice = Math.round(pricePerNight * nights);
             </CardContent>
           </Card>
         ) : (
-          realHotels.map((hotel) => {
+          (Array.isArray(realHotels) ? realHotels : []).map((hotel) => {
             const isSelected = selectedItems.hotel?.hotelId === hotel.hotelId;
             const isLoadingThis =
               selectedHotelForDetails?.hotelId === hotel.hotelId &&
@@ -1632,13 +1772,12 @@ const totalPrice = Math.round(pricePerNight * nights);
 
             const hotelName = hotel.hotelName || "Hotel";
             const hotelAddress =
-              typeof hotel.address === "string"
-                ? hotel.address
-                : hotel.address?.line1
-                ? `${hotel.address.line1}${
-                    hotel.address.cityName ? ", " + hotel.address.cityName : ""
-                  }`
-                : hotel.city || tripData?.destinations?.[0]?.location || "";
+              hotel.address?.full ||
+              [hotel.address?.city, hotel.address?.country]
+                .filter(Boolean)
+                .join(", ") ||
+              tripData?.destinations?.[0]?.location ||
+              "";
 
             const grossPrice = hotel.pricing?.total || hotel.pricing?.base || 0;
 
@@ -1670,22 +1809,35 @@ const totalPrice = Math.round(pricePerNight * nights);
                 <CardContent className="p-6">
                   <div className="flex flex-col sm:flex-row items-start gap-4">
                     {/* Hotel Image */}
-                    <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                      {hotel.mainPhoto ? (
-                        <img
-                          src={hotel.mainPhoto}
-                          alt={hotelName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                            target.parentElement!.innerHTML =
-                              '<div class="h-8 w-8 text-gray-400"><svg>...</svg></div>';
-                          }}
-                        />
-                      ) : (
-                        <Hotel className="h-8 w-8 text-gray-400" />
-                      )}
+                    {/* <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                    {hotel.mainPhoto || hotel.photos?.[0] ? (
+                      <img
+                        src={hotel.mainPhoto || hotel.photos?.[0]}
+                        alt={hotelName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <Hotel className="h-8 w-8 text-gray-400" />
+                    )}
+                  </div> */}
+                    <div className="w-32 h-24 bg-gray-200 rounded-lg overflow-hidden">
+                      <img
+                        src={
+                          hotel.mainPhoto ||
+                          hotel.photos?.[0] ||
+                          "/placeholder-hotel.jpg"
+                        }
+                        alt={hotelName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder-hotel.jpg";
+                        }}
+                      />
                     </div>
 
                     <div className="flex-1">
@@ -1747,22 +1899,20 @@ const totalPrice = Math.round(pricePerNight * nights);
                           <div className="flex items-center space-x-1 mt-1">
                             <MapPin className="h-4 w-4 text-gray-400" />
                             <span className="text-sm text-gray-600">
-                              {typeof hotel.address === "string"
-                                ? hotel.address
-                                : hotel.address?.line1 ||
-                                  hotel.address?.cityName ||
-                                  hotel.city
-                                ? `${hotel.address?.line1 || ""} ${
-                                    hotel.address?.cityName || hotel.city || ""
-                                  }, ${
-                                    hotel.address?.countryCode ||
-                                    hotel.country ||
-                                    ""
-                                  }`
-                                : tripData?.destinations?.[0]?.location ||
-                                  "Location not available"}
+                              {hotel.address?.full ||
+                                [hotel.address?.city, hotel.address?.country]
+                                  .filter(Boolean)
+                                  .join(", ") ||
+                                "Location not available"}
                             </span>
                           </div>
+
+                          {/* Distance from tourist center */}
+                          {hotel.distanceFromCenter !== undefined && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              📍 {hotel.distanceFromCenter} km from city center
+                            </p>
+                          )}
 
                           {/* Distance (if available) */}
                           {hotel.distance && hotel.distance > 0 && (
@@ -1829,10 +1979,10 @@ const totalPrice = Math.round(pricePerNight * nights);
                               {isLoadingThis
                                 ? "Loading..."
                                 : soldOut
-                                ? "Unavailable"
-                                : isSelected
-                                ? "Selected"
-                                : "Select"}
+                                  ? "Unavailable"
+                                  : isSelected
+                                    ? "Selected"
+                                    : "Select"}
                             </button>
                           </div>
                         </div>
@@ -1859,6 +2009,33 @@ const totalPrice = Math.round(pricePerNight * nights);
             );
           })
         )}
+        {hotelPagination.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-6">
+            <button
+              onClick={() => setHotelPage((prev) => Math.max(prev - 1, 1))}
+              disabled={!hotelPagination.hasPrevPage}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Previous
+            </button>
+
+            <span className="text-sm text-gray-600">
+              Page {hotelPage} of {hotelPagination.totalPages}
+            </span>
+
+            <button
+              onClick={() =>
+                setHotelPage((prev) =>
+                  hotelPagination.hasNextPage ? prev + 1 : prev,
+                )
+              }
+              disabled={!hotelPagination.hasNextPage}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -1867,52 +2044,69 @@ const totalPrice = Math.round(pricePerNight * nights);
     const days = getTripDuration();
 
     const handleCabSelect = async (cab: any) => {
-  try {
-    const days = getTripDuration();
-    const totalPrice = cab.price * days;
+      try {
+        const days = getTripDuration();
+        const totalPrice = cab.price * days;
 
-    const payload = {
-      tripId,
-      vehicleType: cab.vehicle,
-      serviceLevel: cab.type,
-      startDate: tripData.startDate,
-      endDate: tripData.endDate,
-      price: totalPrice
-    };
-
-    const response = await fetch(
-      `${BOOKING_API_URL}/api/transportation-bookings`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(payload)
-      }
-    );
-
-    const result = await response.json();
-
-    if (response.ok && result.success) {
-      setSelectedItems({
-        ...selectedItems,
-        cab: {
-          ...cab,
-          totalPrice,
-          transportationBookingId: result.data.transportationBookingId
+        if (selectedItems.cab?.id === cab.id) {
+          setSelectedItems((prev) => ({ ...prev, cab: null }));
+          return;
         }
-      });
 
-      // 🔥 IMPORTANT - Save parent booking ID
-      localStorage.setItem("currentBookingId", result.data.parentBookingId);
-    }
+        const payload = {
+          tripId,
+          vehicleType: cab.vehicle,
+          serviceLevel: cab.type,
+          startDate: tripData.startDate,
+          endDate: tripData.endDate,
+          price: totalPrice,
+        };
 
-  } catch (error) {
-    console.error("Cab booking error:", error);
-  }
-};
+        const response = await fetch(
+          `${BOOKING_API_URL}/api/transportation-bookings`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+            body: JSON.stringify(payload),
+          },
+        );
 
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setSelectedItems((prev) => ({
+            ...prev,
+            cab: {
+              ...cab,
+              totalPrice,
+              transportationBookingId: result.data.transportationBookingId,
+            },
+          }));
+
+          // ✅ Only update bookingId if not already set from hotel/flight
+          if (result.data.parentBookingId) {
+            localStorage.setItem(
+              "currentBookingId",
+              result.data.parentBookingId,
+            );
+          }
+        } else {
+          toast({
+            title: "Could not save cab selection",
+            description: result.message || "Please try again",
+            variant: "destructive",
+          });
+
+          // 🔥 IMPORTANT - Save parent booking ID
+          localStorage.setItem("currentBookingId", result.data.parentBookingId);
+        }
+      } catch (error) {
+        console.error("Cab booking error:", error);
+      }
+    };
 
     return (
       <div className="space-y-4">
@@ -2037,7 +2231,7 @@ const totalPrice = Math.round(pricePerNight * nights);
       phone: "",
     });
 
-    const nights = getTripDuration() ;
+    const nights = getTripDuration();
     const days = getTripDuration();
 
     // Load Razorpay SDK once when component mounts
@@ -2118,7 +2312,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                         allocatedAmount: parseFloat(
                           selectedItems.flight.price?.total ||
                             selectedItems.flight.price ||
-                            0
+                            0,
                         ),
                         currency: "INR",
                       },
@@ -2148,7 +2342,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                   : []),
               ],
             }),
-          }
+          },
         );
 
         const data = await response.json();
@@ -2175,31 +2369,69 @@ const totalPrice = Math.round(pricePerNight * nights);
       }
     };
 
+    const confirmHotelIfNeeded = async () => {
+      const hotelBookingId = selectedItems.hotel?.hotelBookingId;
+
+      console.log("CONFIRM SELECTED HOTEL DEBUG:", selectedItems.hotel);
+      console.log("CONFIRM hotelBookingId:", hotelBookingId);
+
+      if (!hotelBookingId) {
+        throw new Error("Hotel bookingId is missing before confirm");
+      }
+
+      console.log("🏨 Step 3: Confirming hotel after payment...");
+
+      const response = await fetch(
+        `${BOOKING_API_URL}/api/hotels/bookings/confirm`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            bookingId: hotelBookingId,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      console.log("🏨 Confirm response:", data);
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Hotel confirmation failed");
+      }
+
+      return data;
+    };
+
     // Verify payment
-    const verifyPayment = async (razorpayResponse: {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-}, bookingId: string) => {
+    const verifyPayment = async (
+      razorpayResponse: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+      },
+      bookingId: string,
+    ) => {
       try {
         console.log("🔍 Verifying payment:", razorpayResponse);
 
-        const response = await fetch(
-          `${PAYMENTS_API_URL}/api/payment/verify`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-            body: JSON.stringify({
-              razorpay_order_id: razorpayResponse.razorpay_order_id,
-              razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-              razorpay_signature: razorpayResponse.razorpay_signature,
-              bookingId,
-            }),
-          }
-        );
+        const response = await fetch(`${PAYMENTS_API_URL}/api/payment/verify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          body: JSON.stringify({
+            razorpay_order_id: razorpayResponse.razorpay_order_id,
+            razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+            razorpay_signature: razorpayResponse.razorpay_signature,
+            bookingId,
+          }),
+        });
 
         const data = await response.json();
 
@@ -2207,6 +2439,12 @@ const totalPrice = Math.round(pricePerNight * nights);
 
         if (!data.success) {
           throw new Error(data.error || "Payment verification failed");
+        }
+
+        // If hotel exists, confirm supplier booking after successful payment
+        if (selectedItems.hotel?.hotelBookingId) {
+          console.log("🏨 Step 3: Confirming hotel after payment...");
+          await confirmHotelIfNeeded();
         }
 
         toast({
@@ -2218,23 +2456,31 @@ const totalPrice = Math.round(pricePerNight * nights);
         onPaymentSuccess(bookingId);
       } catch (error: unknown) {
         console.error("❌ Payment verification error:", error);
-        const errMsg = (error as Error).message || "Payment verification failed";
-        toast({ title: "Test Failed", description: errMsg, variant: "destructive" });
+        const errMsg =
+          (error as Error).message || "Payment verification failed";
+        toast({
+          title: "Test Failed",
+          description: errMsg,
+          variant: "destructive",
+        });
         setLoading(false);
       }
     };
 
     // Open Razorpay checkout
-    const openRazorpayCheckout = (paymentData: {
-  key: string;
-  razorpayOrder: { id: string; amount: number; currency: string };
-}, bookingId: string) => {
+    const openRazorpayCheckout = (
+      paymentData: {
+        key: string;
+        razorpayOrder: { id: string; amount: number; currency: string };
+      },
+      bookingId: string,
+    ) => {
       console.log("🚀 openRazorpayCheckout called");
       console.log("📦 Payment data received:", paymentData);
       console.log("🆔 Booking ID:", bookingId);
       console.log(
         "🔍 Window.Razorpay exists:",
-        typeof window.Razorpay !== "undefined"
+        typeof window.Razorpay !== "undefined",
       );
 
       if (!window.Razorpay) {
@@ -2268,11 +2514,11 @@ const totalPrice = Math.round(pricePerNight * nights);
         name: "Travel Booking",
         description: `Booking Payment - ${bookingId.substring(0, 8)}...`,
         image: "/logo.png", // Add your logo
-        handler: async (response:  {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-}) => {
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
           console.log("✅ Payment handler called:", response);
           await verifyPayment(response, bookingId);
         },
@@ -2321,18 +2567,19 @@ const totalPrice = Math.round(pricePerNight * nights);
 
         console.log("✅ Razorpay instance created:", razorpay);
 
-        razorpay.on("payment.failed", function (response:  {
-  error: { description: string };
-}) {
-          console.error("❌ Payment failed event:", response.error);
-          toast({
-            title: "Payment Failed",
-            description:
-              response.error.description || "Payment could not be processed",
-            variant: "destructive",
-          });
-          setLoading(false);
-        });
+        razorpay.on(
+          "payment.failed",
+          function (response: { error: { description: string } }) {
+            console.error("❌ Payment failed event:", response.error);
+            toast({
+              title: "Payment Failed",
+              description:
+                response.error.description || "Payment could not be processed",
+              variant: "destructive",
+            });
+            setLoading(false);
+          },
+        );
 
         console.log("🎯 Calling razorpay.open()...");
         razorpay.open();
@@ -2342,11 +2589,50 @@ const totalPrice = Math.round(pricePerNight * nights);
         console.error("❌ Error stack:", (error as Error).stack);
         toast({
           title: "Error",
-          description: "Failed to open payment gateway: " + (error as Error).message,
+          description:
+            "Failed to open payment gateway: " + (error as Error).message,
           variant: "destructive",
         });
         setLoading(false);
       }
+    };
+
+    const prebookHotelIfNeeded = async () => {
+      const hotelBookingId = selectedItems.hotel?.hotelBookingId;
+
+      console.log("PREBOOK SELECTED HOTEL DEBUG:", selectedItems.hotel);
+      console.log("PREBOOK hotelBookingId:", hotelBookingId);
+
+      if (!hotelBookingId) {
+        throw new Error("Hotel bookingId is missing before prebook");
+      }
+
+      console.log("🏨 Step 1: Prebooking hotel before payment...");
+
+      const response = await fetch(
+        `${BOOKING_API_URL}/api/hotels/bookings/prebook`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            bookingId: hotelBookingId,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      console.log("🏨 Prebooking response:", data);
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Hotel prebook failed");
+      }
+
+      return data;
     };
 
     // Main payment handler
@@ -2437,11 +2723,21 @@ const totalPrice = Math.round(pricePerNight * nights);
       setLoading(true);
 
       try {
-       
         const bookingId = localStorage.getItem("currentBookingId");
 
         if (!bookingId) {
           throw new Error("Booking ID not received and no tripId available");
+        }
+
+        console.log("PREBOOK SELECTED HOTEL DEBUG:", selectedItems.hotel);
+        console.log(
+          "PREBOOK hotelBookingId:",
+          selectedItems.hotel?.hotelBookingId,
+        );
+
+        if (selectedItems.hotel?.hotelBookingId) {
+          console.log("🏨 Step 1: Prebooking hotel before payment...");
+          await prebookHotelIfNeeded();
         }
 
         // Step 2: Initiate payment
@@ -2489,7 +2785,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                           ?.departure?.iataCode || "DEP"}{" "}
                         →
                         {selectedItems.flight.itineraries?.[0]?.segments?.slice(
-                          -1
+                          -1,
                         )[0]?.arrival?.iataCode || "ARR"}
                       </p>
                     </div>
@@ -2500,7 +2796,7 @@ const totalPrice = Math.round(pricePerNight * nights);
                       {parseFloat(
                         selectedItems.flight.price?.total ||
                           selectedItems.flight.price ||
-                          0
+                          0,
                       ).toFixed(2)}
                     </p>
                   </div>
@@ -2634,7 +2930,9 @@ const totalPrice = Math.round(pricePerNight * nights);
               {razorpayLoaded && (
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-800">
-                   {" 💳 You'll be redirected to a secure Razorpay payment gateway"}
+                    {
+                      " 💳 You'll be redirected to a secure Razorpay payment gateway"
+                    }
                   </p>
                 </div>
               )}
@@ -2686,11 +2984,11 @@ const totalPrice = Math.round(pricePerNight * nights);
                       currency: "INR",
                       name: "Test Payment",
                       description: "Testing Razorpay Integration",
-                      handler: function (response:{
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}) {
+                      handler: function (response: {
+                        razorpay_payment_id: string;
+                        razorpay_order_id: string;
+                        razorpay_signature: string;
+                      }) {
                         console.log("✅ Test payment success:", response);
                         toast({
                           title: "Test Successful",
@@ -2813,8 +3111,8 @@ const totalPrice = Math.round(pricePerNight * nights);
                           isActive
                             ? "bg-pink-100 text-pink-700"
                             : isCompleted
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-500"
                         }`}
                       >
                         <StepIcon className="h-5 w-5" />
@@ -2837,7 +3135,11 @@ const totalPrice = Math.round(pricePerNight * nights);
 
           {/* Navigation Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <Button variant="outline" onClick={handleBack} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              className="w-full sm:w-auto"
+            >
               {getCurrentStepIndex() === 0 ? "Back to Trip Planner" : "Back"}
             </Button>
 
@@ -2869,6 +3171,7 @@ const totalPrice = Math.round(pricePerNight * nights);
           isOpen={showHotelOverlay}
           onClose={() => setShowHotelOverlay(false)}
           offerId={selectedHotelForOverlay.offerId}
+          selectedHotel={selectedHotelForOverlay}
           checkInDate={bookingDetails.checkIn}
           checkOutDate={bookingDetails.checkOut}
           adults={tripData?.adults || 2}
@@ -2876,20 +3179,24 @@ const totalPrice = Math.round(pricePerNight * nights);
           onSelect={(hotelDetails) => {
             const nights = getTripDuration() - 1;
 
-            // ✅ FIX: Use Amadeus pricing structure
-            const basePrice = parseFloat(
-              hotelDetails.offer?.price?.base ||
-                hotelDetails.offer?.price?.total ||
-                "0"
-            );
-            const totalPrice = parseFloat(
-              hotelDetails.offer?.price?.total || "0"
-            );
-            const currency = hotelDetails.offer?.price?.currency || "USD";
+            // // ✅ FIX: Use Amadeus pricing structure
+            // const basePrice = parseFloat(
+            //   hotelDetails.offer?.price?.base ||
+            //     hotelDetails.offer?.price?.total ||
+            //     "0"
+            // );
+            // const totalPrice = parseFloat(
+            //   hotelDetails.offer?.price?.total || "0"
+            // );
+            // const currency = hotelDetails.offer?.price?.currency || "INR";
+            const pricePerNight = selectedHotelForOverlay?.pricing?.total || 0;
+            const totalPrice = Math.round(pricePerNight * nights);
+            const currency =
+              selectedHotelForOverlay?.pricing?.currency || "INR";
 
             console.log("📊 Hotel selected from overlay:", {
               hotelName: hotelDetails.hotelInfo?.hotelName,
-              basePrice,
+              pricePerNight,
               totalPrice,
               currency,
               nights,
@@ -2901,31 +3208,43 @@ const totalPrice = Math.round(pricePerNight * nights);
                 // ✅ Map Amadeus structure to your selected items format
                 hotelId: hotelDetails.hotelInfo?.hotelId,
                 hotelName: hotelDetails.hotelInfo?.hotelName,
-                offerId: hotelDetails.offer?.id,
+                // offerId: hotelDetails.offer?.id,
+                offerId: hotelDetails.hotelInfo?.hotelId, // same as hotelId for RateHawk
 
                 // Address info
                 address: {
                   street: hotelDetails.hotelInfo?.googleAddress || "",
-                  city: hotelDetails.hotelInfo?.address?.state || "",
-                  country: hotelDetails.hotelInfo?.address?.country || "",
+                  city: hotelDetails.hotelInfo?.address?.street || "",
+                  country: hotelDetails.hotelInfo?.address?.full || "",
                 },
 
                 // Coordinates
-                coordinates: hotelDetails.hotelInfo?.address || {},
+                // coordinates: hotelDetails.hotelInfo?.address || {},
+                coordinates: {
+                  latitude: hotelDetails.hotelInfo?.coordinates?.lat,
+                  longitude: hotelDetails.hotelInfo?.coordinates?.lng,
+                },
 
                 // Rating
                 rating: hotelDetails.hotelInfo?.googleRating,
                 reviewCount: hotelDetails.hotelInfo?.googleReviewCount,
 
                 // Photos
-                photos: hotelDetails.hotelInfo?.photos || [],
-                mainPhoto: hotelDetails.hotelInfo?.photos?.[0] || null,
+                // photos: hotelDetails.hotelInfo?.photos || [],
+                // mainPhoto: hotelDetails.hotelInfo?.photos?.[0] || null,
+                photos:
+                  hotelDetails.hotelInfo?.photos?.map((p: any) => p.url) || [],
+                mainPhoto: hotelDetails.hotelInfo?.mainPhoto || null,
+
+                // Amenities and description now available from RateHawk
+                amenities: hotelDetails.hotelInfo?.amenities || [],
+                description: hotelDetails.hotelInfo?.description || [],
 
                 // Pricing
                 pricing: {
                   currency: currency,
                   total: totalPrice,
-                  base: basePrice,
+                  base: pricePerNight,
                   taxes: hotelDetails.offer?.price?.taxes || [],
                 },
 
@@ -2938,6 +3257,9 @@ const totalPrice = Math.round(pricePerNight * nights);
 
                 // Policies
                 policies: hotelDetails.offer?.policies,
+
+                // Keep the bookHash from the original search result — needed for prebook
+                bookHash: selectedHotelForOverlay?.bookHash || null,
 
                 // Calculated values
                 nights,
@@ -2966,7 +3288,13 @@ const totalPrice = Math.round(pricePerNight * nights);
 };
 
 const TravelBookingFlow = () => (
-  <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
+  <Suspense
+    fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    }
+  >
     <TravelBookingPageComponent />
   </Suspense>
 );
